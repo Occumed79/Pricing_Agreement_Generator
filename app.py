@@ -8,6 +8,7 @@ import uuid
 import zipfile
 from dataclasses import dataclass
 from datetime import date
+from html import escape
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -503,6 +504,42 @@ def make_zip(template: TemplateMeta, records: pd.DataFrame) -> Tuple[bytes, List
     return zip_buffer.getvalue(), manifest
 
 
+def render_template_table(templates: List[TemplateMeta]) -> None:
+    rows = []
+    for template in templates:
+        requires_code = "Yes" if template.requires_code else "No"
+        rows.append(
+            "<tr>"
+            f"<td>{escape(template.name)}</td>"
+            f"<td>{escape(template.category)}</td>"
+            f"<td><span class='glass-pill'>{requires_code}</span></td>"
+            f"<td>{escape(template.source)}</td>"
+            f"<td>{escape(template.filename)}</td>"
+            "</tr>"
+        )
+    st.markdown(
+        """
+        <div class="glass-table-wrap">
+          <table class="glass-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Currency Code</th>
+                <th>Source</th>
+                <th>Filename</th>
+              </tr>
+            </thead>
+            <tbody>
+              __ROWS__
+            </tbody>
+          </table>
+        </div>
+        """.replace("__ROWS__", "".join(rows)),
+        unsafe_allow_html=True,
+    )
+
+
 def render_generate_tab() -> None:
     templates, status = get_all_templates()
     st.markdown(f"<div class='status-box'>{status}</div>", unsafe_allow_html=True)
@@ -571,22 +608,7 @@ def render_configure_tab() -> None:
     templates, status = get_all_templates()
     st.caption(status)
     if templates:
-        st.dataframe(
-            pd.DataFrame(
-                [
-                    {
-                        "name": template.name,
-                        "category": template.category,
-                        "requires_code": template.requires_code,
-                        "source": template.source,
-                        "filename": template.filename,
-                    }
-                    for template in templates
-                ]
-            ),
-            use_container_width=True,
-            hide_index=True,
-        )
+        render_template_table(templates)
 
     st.subheader("Upload custom template")
     with st.form("template_upload_form", clear_on_submit=True):
