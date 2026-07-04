@@ -106,16 +106,25 @@ def apply_luminous_ui() -> None:
 
         h1, h2, h3, h4, h5, h6,
         p, label, span, div[data-testid="stMarkdownContainer"],
-        [data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] p {
+        [data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] p,
+        [data-testid="stWidgetLabel"] *, [data-testid="stCaptionContainer"],
+        [data-testid="stCaptionContainer"] *, [data-testid="stText"],
+        [data-testid="stExpander"] *, [data-testid="stForm"] label,
+        [data-testid="stFileUploader"] label, [data-testid="stFileUploader"] small {
           color: var(--text-main) !important;
+          opacity: 1 !important;
         }
 
-        .stCaptionContainer, small, .stMarkdown p { color: var(--text-soft) !important; }
+        .stCaptionContainer, small, .stMarkdown p,
+        [data-testid="stCaptionContainer"] *, [data-testid="stFileUploader"] small {
+          color: var(--text-soft) !important;
+        }
 
         .hero,
         .status-box,
         div[data-testid="stForm"],
-        div[data-testid="stFileUploader"] section {
+        div[data-testid="stFileUploader"] section,
+        div[data-testid="stFileUploaderDropzone"] {
           position: relative;
           border: 1px solid var(--glass-line) !important;
           border-radius: 28px !important;
@@ -128,7 +137,8 @@ def apply_luminous_ui() -> None:
         .hero::after,
         .status-box::after,
         div[data-testid="stForm"]::after,
-        div[data-testid="stFileUploader"] section::after {
+        div[data-testid="stFileUploader"] section::after,
+        div[data-testid="stFileUploaderDropzone"]::after {
           content: "";
           position: absolute;
           inset: 10px;
@@ -151,36 +161,93 @@ def apply_luminous_ui() -> None:
           padding: 10px 18px !important;
           color: rgba(245,248,251,.78) !important;
         }
-        .stTabs [aria-selected="true"] {
+        .stTabs [data-baseweb="tab"] *,
+        .stTabs [data-baseweb="tab"] p {
+          color: rgba(245,248,251,.78) !important;
+        }
+        .stTabs [aria-selected="true"],
+        .stTabs [data-baseweb="tab"][aria-selected="true"] {
           color: #F7FFE4 !important;
           border-color: rgba(203,223,144,.48) !important;
           background: linear-gradient(135deg, rgba(77,124,138,.42), rgba(27,64,121,.38)) !important;
           box-shadow: 0 0 26px rgba(77,124,138,.18) !important;
         }
+        .stTabs [aria-selected="true"] *,
+        .stTabs [data-baseweb="tab"][aria-selected="true"] * {
+          color: #F7FFE4 !important;
+        }
+        .stTabs [data-baseweb="tab-highlight"] {
+          background: var(--om-mindaro) !important;
+        }
 
         input, textarea,
+        [data-testid="stTextInput"] input,
+        [data-testid="stTextArea"] textarea,
+        [data-testid="stNumberInput"] input,
+        [data-testid="stDateInput"] input,
+        [data-testid="stTimeInput"] input,
+        [data-baseweb="select"],
         [data-baseweb="select"] > div,
+        [data-baseweb="input"],
         [data-baseweb="input"] > div,
+        [data-baseweb="textarea"],
         [data-baseweb="textarea"] > div {
           color: #f8fbff !important;
-          background: rgba(5, 10, 18, .76) !important;
-          border-color: rgba(172,200,201,.26) !important;
+          background: rgba(5, 10, 18, .82) !important;
+          border-color: rgba(172,200,201,.32) !important;
           border-radius: 13px !important;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 0 0 1px rgba(0,0,0,.10) !important;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 0 0 1px rgba(0,0,0,.18) !important;
         }
 
-        input::placeholder, textarea::placeholder { color: rgba(230,238,244,.46) !important; }
-        [data-baseweb="select"] span, [data-baseweb="select"] div { color: #f8fbff !important; }
-        [data-baseweb="popover"], [data-baseweb="menu"] { background: #101B24 !important; color: #f8fbff !important; }
+        input:focus, textarea:focus,
+        [data-testid="stTextInput"] input:focus,
+        [data-testid="stTextArea"] textarea:focus,
+        [data-testid="stNumberInput"] input:focus,
+        [data-baseweb="select"]:focus-within,
+        [data-baseweb="input"]:focus-within,
+        [data-baseweb="textarea"]:focus-within {
+          border-color: rgba(203,223,144,.72) !important;
+          box-shadow: 0 0 0 1px rgba(203,223,144,.34), 0 0 28px rgba(77,124,138,.26) !important;
+          outline: none !important;
+        }
+
+        input::placeholder, textarea::placeholder { color: rgba(230,238,244,.48) !important; }
+        [data-baseweb="select"] span,
+        [data-baseweb="select"] div,
+        [data-baseweb="select"] svg,
+        [data-baseweb="input"] *,
+        [data-baseweb="textarea"] * {
+          color: #f8fbff !important;
+          fill: #f8fbff !important;
+        }
+        [data-baseweb="popover"], [data-baseweb="menu"] {
+          background: #101B24 !important;
+          color: #f8fbff !important;
+          border: 1px solid rgba(172,200,201,.28) !important;
+          box-shadow: 0 22px 70px rgba(0,0,0,.44) !important;
+        }
         [role="option"] { color: #f8fbff !important; background: #101B24 !important; }
-        [role="option"]:hover { background: rgba(77,124,138,.35) !important; }
+        [role="option"]:hover, [aria-selected="true"][role="option"] { background: rgba(77,124,138,.42) !important; }
 
         div[data-testid="stRadio"] label,
-        div[data-testid="stCheckbox"] label {
+        div[data-testid="stCheckbox"] label,
+        div[data-testid="stRadio"] label *,
+        div[data-testid="stCheckbox"] label * {
           color: var(--text-main) !important;
+          opacity: 1 !important;
+        }
+        input[type="radio"], input[type="checkbox"] {
+          accent-color: var(--om-mindaro) !important;
+        }
+        [data-testid="stRadio"] [role="radiogroup"] > label > div:first-child,
+        [data-testid="stCheckbox"] label > div:first-child {
+          border-color: rgba(203,223,144,.60) !important;
+          background-color: rgba(5,10,18,.72) !important;
         }
 
-        .stButton > button, .stDownloadButton > button {
+        .stButton > button, .stDownloadButton > button,
+        button[kind="primary"], button[kind="secondary"],
+        [data-testid="stFileUploader"] button {
           border-radius: 16px !important;
           border: 1px solid rgba(203,223,144,.36) !important;
           color: #f8fbff !important;
@@ -188,7 +255,14 @@ def apply_luminous_ui() -> None:
           box-shadow: 0 0 30px rgba(77,124,138,.22) !important;
           font-weight: 800 !important;
         }
-        .stButton > button:hover, .stDownloadButton > button:hover {
+        .stButton > button *, .stDownloadButton > button *,
+        button[kind="primary"] *, button[kind="secondary"] *,
+        [data-testid="stFileUploader"] button * {
+          color: #f8fbff !important;
+        }
+        .stButton > button:hover, .stDownloadButton > button:hover,
+        button[kind="primary"]:hover, button[kind="secondary"]:hover,
+        [data-testid="stFileUploader"] button:hover {
           border-color: rgba(203,223,144,.62) !important;
           box-shadow: 0 0 40px rgba(203,223,144,.16) !important;
         }
@@ -199,12 +273,29 @@ def apply_luminous_ui() -> None:
           border: 1px solid rgba(172,200,201,.22) !important;
           border-radius: 16px !important;
         }
+        div[data-testid="stAlert"] * { color: var(--text-main) !important; }
 
-        div[data-testid="stDataFrame"] {
+        div[data-testid="stDataFrame"],
+        div[data-testid="stTable"],
+        div[data-testid="stDataFrameResizable"] {
           border-radius: 18px !important;
           overflow: hidden !important;
           border: 1px solid rgba(172,200,201,.24) !important;
           box-shadow: 0 18px 50px rgba(0,0,0,.28) !important;
+          background: rgba(5, 10, 18, .55) !important;
+        }
+        div[data-testid="stDataFrame"] iframe,
+        div[data-testid="stDataFrame"] canvas,
+        div[data-testid="stDataFrame"] [role="grid"],
+        div[data-testid="stTable"] table {
+          background: rgba(5, 10, 18, .74) !important;
+          color: #f8fbff !important;
+        }
+        div[data-testid="stTable"] th,
+        div[data-testid="stTable"] td {
+          background: rgba(5, 10, 18, .62) !important;
+          color: #f8fbff !important;
+          border-color: rgba(172,200,201,.18) !important;
         }
 
         .landing-stage {
