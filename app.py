@@ -16,6 +16,8 @@ import streamlit as st
 from docx import Document
 from docx.enum.text import WD_COLOR_INDEX
 
+from ui_experience import apply_luminous_ui, render_landing_page
+
 try:
     import psycopg
     from psycopg.rows import dict_row
@@ -163,38 +165,6 @@ COUNTRY_PATTERNS: List[Tuple[str, str]] = sorted(
 
 def page_style() -> None:
     st.set_page_config(page_title=APP_TITLE, page_icon="📄", layout="wide")
-    st.markdown(
-        """
-        <style>
-        .stApp {
-            background:
-              radial-gradient(circle at 12% 18%, rgba(99, 210, 255, .18), transparent 34%),
-              radial-gradient(circle at 84% 10%, rgba(155, 92, 255, .24), transparent 36%),
-              linear-gradient(135deg, #071421 0%, #11142a 50%, #050914 100%);
-            color: #f5f7fb;
-        }
-        [data-testid="stHeader"] { background: transparent; }
-        .hero {
-            padding: 34px 38px;
-            border: 1px solid rgba(255,255,255,.16);
-            border-radius: 26px;
-            background: linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,.05));
-            box-shadow: 0 28px 90px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.15);
-            backdrop-filter: blur(20px) saturate(150%);
-            margin-bottom: 22px;
-        }
-        .hero h1 { margin: 0 0 10px 0; font-size: 2.35rem; letter-spacing: -.04em; }
-        .hero p { color: rgba(245,247,251,.82); font-size: 1.03rem; line-height: 1.65; max-width: 900px; }
-        .status-box {
-            padding: 12px 14px;
-            border-radius: 14px;
-            background: rgba(255,255,255,.08);
-            border: 1px solid rgba(255,255,255,.12);
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
 
 
 def today_label() -> str:
@@ -657,6 +627,10 @@ def render_configure_tab() -> None:
 
 def main() -> None:
     page_style()
+    apply_luminous_ui()
+    if st.query_params.get("view") != "app":
+        render_landing_page()
+
     st.markdown(
         """
         <div class="hero">
@@ -666,6 +640,9 @@ def main() -> None:
         """,
         unsafe_allow_html=True,
     )
+    if st.button("Return to landing page"):
+        st.query_params.clear()
+        st.rerun()
     tab_generate, tab_configure = st.tabs(["Generate Agreements", "Configure Templates"])
     with tab_generate:
         render_generate_tab()
