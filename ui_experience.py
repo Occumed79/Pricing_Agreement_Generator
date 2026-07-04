@@ -84,8 +84,8 @@ def apply_luminous_ui() -> None:
         }
 
         @keyframes sheetFloat {
-          0%, 100% { translate: 0 0; opacity: .56; }
-          50% { translate: var(--dx) var(--dy); opacity: .88; }
+          0%, 100% { transform: translate3d(0, 0, 0) rotate(var(--r)); opacity: .72; }
+          50% { transform: translate3d(var(--dx), var(--dy), 0) rotate(calc(var(--r) + 2deg)); opacity: .96; }
         }
 
         @keyframes lineGlow {
@@ -95,8 +95,8 @@ def apply_luminous_ui() -> None:
         }
 
         @keyframes haloPulse {
-          0%, 100% { transform: scale(.94); opacity: .30; }
-          50% { transform: scale(1.08); opacity: .68; }
+          0%, 100% { transform: scale(.94); opacity: .32; }
+          50% { transform: scale(1.08); opacity: .72; }
         }
 
         [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stStatusWidget"] { background: transparent !important; }
@@ -208,58 +208,62 @@ def apply_luminous_ui() -> None:
         }
 
         .landing-stage {
-          min-height: calc(100vh - 28px);
+          min-height: calc(100vh - 8px);
+          width: 100vw;
           display: grid;
           place-items: center;
           position: relative;
           overflow: hidden;
-          margin: -1.5rem -1rem 0;
+          margin: -1.75rem calc(50% - 50vw) 0;
+          padding: 18px 24px;
+          box-sizing: border-box;
         }
 
         .landing-click {
           display: block;
           position: relative;
-          width: min(1160px, 96vw);
-          min-height: min(720px, calc(100vh - 80px));
+          width: min(1500px, calc(100vw - 48px));
+          height: min(900px, calc(100vh - 54px));
+          min-height: 760px;
           text-decoration: none !important;
           color: inherit !important;
-          border-radius: 38px;
+          border-radius: 42px;
           overflow: hidden;
-          border: 1px solid rgba(172,200,201,.14);
-          background: radial-gradient(circle at 50% 48%, rgba(77,124,138,.25), transparent 34%), radial-gradient(circle at 18% 54%, rgba(27,64,121,.34), transparent 35%), linear-gradient(135deg, rgba(28,40,46,.72), rgba(6,12,22,.94));
-          box-shadow: 0 34px 120px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.08);
+          border: 1px solid rgba(172,200,201,.18);
+          background: radial-gradient(circle at 50% 48%, rgba(77,124,138,.28), transparent 34%), radial-gradient(circle at 18% 54%, rgba(27,64,121,.38), transparent 35%), linear-gradient(135deg, rgba(28,40,46,.86), rgba(6,12,22,.96));
+          box-shadow: 0 34px 120px rgba(0,0,0,.50), inset 0 1px 0 rgba(255,255,255,.10);
         }
-        .landing-click::before { content: ""; position: absolute; inset: -18%; background: linear-gradient(115deg, transparent 22%, rgba(77,124,138,.30) 42%, rgba(203,223,144,.13) 50%, transparent 66%), radial-gradient(ellipse at center, rgba(27,64,121,.32), transparent 58%); filter: blur(18px); animation: omRibbonSweep 18s ease-in-out infinite alternate; }
-        .landing-click::after { content: ""; position: absolute; inset: 18px; border: 1px solid rgba(255,255,255,.08); border-radius: 28px; pointer-events: none; }
+        .landing-click::before { content: ""; position: absolute; inset: -18%; background: linear-gradient(115deg, transparent 22%, rgba(77,124,138,.32) 42%, rgba(203,223,144,.14) 50%, transparent 66%), radial-gradient(ellipse at center, rgba(27,64,121,.34), transparent 58%); filter: blur(18px); animation: omRibbonSweep 18s ease-in-out infinite alternate; }
+        .landing-click::after { content: ""; position: absolute; inset: 18px; border: 1px solid rgba(255,255,255,.09); border-radius: 30px; pointer-events: none; }
 
-        .landing-logo-wrap { position: absolute; inset: 0; display: grid; place-items: center; z-index: 8; pointer-events: none; }
-        .landing-logo-halo { position: absolute; width: min(500px, 58vw); height: min(290px, 34vw); border-radius: 50%; background: radial-gradient(ellipse at center, rgba(172,200,201,.25), rgba(77,124,138,.14) 38%, transparent 70%); filter: blur(16px); animation: haloPulse 7s ease-in-out infinite; }
-        .brand-logo { position: relative; z-index: 2; display: grid; place-items: center; gap: 22px; filter: drop-shadow(0 0 24px rgba(172,200,201,.45)) drop-shadow(0 0 56px rgba(27,64,121,.48)); }
-        .brand-mark { width: min(260px, 35vw); height: auto; overflow: visible; }
+        .landing-logo-wrap { position: absolute; inset: 0; display: grid; place-items: center; z-index: 5; pointer-events: none; }
+        .landing-logo-halo { position: absolute; width: min(550px, 64vw); height: min(330px, 40vw); border-radius: 50%; background: radial-gradient(ellipse at center, rgba(172,200,201,.28), rgba(77,124,138,.14) 38%, transparent 68%); filter: blur(16px); animation: haloPulse 7s ease-in-out infinite; }
+        .brand-logo { position: relative; z-index: 2; display: grid; place-items: center; gap: 22px; filter: drop-shadow(0 0 24px rgba(172,200,201,.45)) drop-shadow(0 0 50px rgba(27,64,121,.50)); }
+        .brand-mark { width: min(310px, 38vw); height: auto; overflow: visible; }
         .brand-mark path { fill: #ffffff; }
         .brand-mark line { stroke: #06101A; stroke-width: 8; stroke-linecap: square; }
-        .brand-word { font-size: clamp(2.1rem, 5vw, 4.1rem); line-height: 1; letter-spacing: .13em; font-weight: 800; color: #ffffff; font-family: Georgia, 'Times New Roman', serif; }
+        .brand-word { font-size: clamp(2.3rem, 5.2vw, 4.6rem); line-height: 1; letter-spacing: .13em; font-weight: 800; color: #ffffff; font-family: Georgia, 'Times New Roman', serif; }
 
-        .price-sheet { position: absolute; z-index: 2; width: 225px; min-height: 272px; padding: 22px 20px; border: 1px solid rgba(172,200,201,.22); border-radius: 8px; background: linear-gradient(160deg, rgba(27,64,121,.30), rgba(28,40,46,.64)); box-shadow: 0 20px 50px rgba(0,0,0,.36), inset 0 1px 0 rgba(255,255,255,.09), 0 0 28px rgba(77,124,138,.10); backdrop-filter: blur(8px); animation: sheetFloat 9s ease-in-out infinite; --dx: 12px; --dy: -16px; --r: -7deg; transform: rotate(var(--r)); }
-        .price-sheet::after { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(255,255,255,.06); border-radius: 5px; pointer-events: none; }
-        .price-title { text-align: center; font-weight: 900; letter-spacing: .12em; font-size: .72rem; color: #f7fbff; margin-bottom: 14px; text-transform: uppercase; }
-        .line { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 7px 0; border-bottom: 1px solid rgba(172,200,201,.16); color: rgba(245,248,251,.80); font-size: .77rem; animation: lineGlow 6.4s ease-in-out infinite; animation-delay: var(--delay); }
+        .price-sheet { position: absolute; z-index: 2; width: 235px; min-height: 285px; padding: 24px 22px; border: 1px solid rgba(172,200,201,.26); border-radius: 8px; background: linear-gradient(160deg, rgba(27,64,121,.34), rgba(28,40,46,.72)); box-shadow: 0 20px 50px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.10), 0 0 28px rgba(77,124,138,.12); backdrop-filter: blur(8px); animation: sheetFloat 9s ease-in-out infinite; --dx: 12px; --dy: -16px; --r: -7deg; }
+        .price-sheet::after { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(255,255,255,.07); border-radius: 5px; pointer-events: none; }
+        .price-title { text-align: center; font-weight: 900; letter-spacing: .12em; font-size: .78rem; color: #f7fbff; margin-bottom: 16px; text-transform: uppercase; }
+        .line { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(172,200,201,.18); color: rgba(245,248,251,.86); font-size: .82rem; animation: lineGlow 6.4s ease-in-out infinite; animation-delay: var(--delay); }
         .line span:last-child { color: #f2ffe0; }
-        .s1 { left: 4%; top: 15%; --r: -6deg; --dx: 16px; --dy: -18px; }
-        .s2 { left: 32%; top: 5%; transform: rotate(-3deg) scale(.70); --r: -3deg; --dx: -10px; --dy: 18px; animation-duration: 11s; }
-        .s3 { right: 4%; top: 12%; --r: 8deg; --dx: -18px; --dy: -12px; animation-duration: 10s; }
-        .s4 { left: 22%; bottom: 8%; transform: rotate(-5deg) scale(.72); --r: -5deg; --dx: 18px; --dy: 15px; animation-duration: 12s; }
-        .s5 { right: 26%; bottom: 7%; transform: rotate(7deg) scale(.72); --r: 7deg; --dx: -10px; --dy: 12px; animation-duration: 9.5s; }
-        .s6 { right: 10%; bottom: 25%; transform: rotate(10deg) scale(.76); --r: 10deg; --dx: 12px; --dy: -12px; animation-duration: 13s; }
-        .s7 { display: none; }
-        .enter-copy { position: absolute; left: 50%; bottom: 32px; transform: translateX(-50%); z-index: 9; color: rgba(245,248,251,.72); font-size: .88rem; letter-spacing: .16em; text-transform: uppercase; }
+        .s1 { left: 3%; top: 16%; --r: -7deg; --dx: 16px; --dy: -18px; }
+        .s2 { left: 29%; top: 6%; transform: scale(.72); --r: -4deg; --dx: -10px; --dy: 18px; animation-duration: 11s; }
+        .s3 { right: 7%; top: 12%; --r: 8deg; --dx: -18px; --dy: -12px; animation-duration: 10s; }
+        .s4 { left: 21%; bottom: 9%; transform: scale(.74); --r: -6deg; --dx: 18px; --dy: 15px; animation-duration: 12s; }
+        .s5 { right: 26%; bottom: 11%; transform: scale(.78); --r: 7deg; --dx: -10px; --dy: 12px; animation-duration: 9.5s; }
+        .s6 { right: 12%; bottom: 26%; transform: scale(.82); --r: 11deg; --dx: 12px; --dy: -12px; animation-duration: 13s; }
+        .s7 { left: 44%; top: 2%; transform: scale(.66); --r: -5deg; --dx: 8px; --dy: 20px; animation-duration: 14s; opacity: .58; }
+        .enter-copy { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); z-index: 8; color: rgba(245,248,251,.70); font-size: .92rem; letter-spacing: .12em; text-transform: uppercase; }
 
         @media (max-width: 820px) {
-          .landing-click { min-height: 650px; }
-          .price-sheet { width: 185px; min-height: 225px; padding: 17px; opacity: .60; }
-          .s2, .s5, .s6, .s7 { display: none; }
+          .landing-click { width: calc(100vw - 24px); height: calc(100vh - 48px); min-height: 680px; }
+          .price-sheet { width: 190px; min-height: 235px; padding: 18px; opacity: .68; }
+          .s2, .s5, .s7 { display: none; }
           .block-container { padding-left: 1rem; padding-right: 1rem; }
-          .brand-mark { width: min(210px, 48vw); }
+          .brand-mark { width: min(240px, 48vw); }
         }
         </style>
         """,
@@ -301,6 +305,7 @@ def render_landing_page() -> None:
         _landing_sheet("s4", services[1:7]),
         _landing_sheet("s5", alt_services),
         _landing_sheet("s6", services[2:]),
+        _landing_sheet("s7", services[:5]),
     ])
     html = """
     <div class="landing-stage">
