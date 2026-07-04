@@ -10,7 +10,7 @@ A Streamlit app that generates clean provider pricing agreements from saved `.do
   - Yellow = provider/clinic name
   - Green = address
   - Blue/cyan = today's date
-  - Gray = currency code for overseas templates
+  - Gray = currency code for overseas templates, such as `CAD`, `GBP`, `MXN`, `AUD`, or `EUR`
 - Removes highlight formatting from generated output documents.
 - Creates one `.docx` per provider.
 - Packages generated files into a downloadable ZIP with a `manifest.csv`.
@@ -57,6 +57,8 @@ For overseas templates, the app can:
 2. Auto-detect common countries from the address.
 3. Accept a manual 3-letter currency code override.
 
+The gray highlighted placeholders use **currency codes**, not country ISO alpha-3 codes. For example, Canada resolves to `CAD`, not `CAN`.
+
 ## Render deployment
 
 Runtime is pinned to Python `3.12.8`.
@@ -64,7 +66,7 @@ Runtime is pinned to Python `3.12.8`.
 Build command:
 
 ```bash
-pip install --upgrade pip && pip install -r requirements.txt
+pip install --upgrade pip && pip install -r requirements.txt && python -m py_compile app.py
 ```
 
 Start command:
