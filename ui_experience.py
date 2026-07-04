@@ -8,11 +8,11 @@ import streamlit as st
 def logo_markup() -> str:
     return """
     <div class="brand-logo" aria-label="Occu-Med logo">
-      <svg class="brand-mark" viewBox="0 0 320 150" role="img" aria-hidden="true">
-        <path d="M42 74C42 32 76 8 116 8H154V142H116C76 142 42 116 42 74Z" />
-        <path d="M166 8H204C244 8 278 32 278 74V142H166V8Z" />
-        <line x1="156" y1="8" x2="156" y2="142" />
-      </svg>
+      <div class="brand-mark-css" aria-hidden="true">
+        <span class="mark-left"></span>
+        <span class="mark-mid"></span>
+        <span class="mark-right"></span>
+      </div>
       <div class="brand-word">OCCU-MED</div>
     </div>
     """
@@ -152,6 +152,49 @@ def apply_luminous_ui() -> None:
         .hero h1 { margin: 0 0 10px 0; font-size: clamp(2rem, 4vw, 3.18rem); letter-spacing: -.055em; }
         .hero p { color: var(--text-soft) !important; font-size: 1.05rem; line-height: 1.65; max-width: 920px; }
         .status-box { padding: 15px 18px; margin: 12px 0 20px; }
+
+        .glass-table-wrap {
+          margin: 18px 0 30px;
+          border: 1px solid rgba(172,200,201,.28);
+          border-radius: 22px;
+          overflow: hidden;
+          background: linear-gradient(135deg, rgba(172,200,201,.12), rgba(27,64,121,.16), rgba(5,10,18,.72));
+          box-shadow: 0 22px 70px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.10);
+        }
+        .glass-table {
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0;
+          color: var(--text-main);
+          font-size: .94rem;
+        }
+        .glass-table th {
+          text-align: left;
+          padding: 13px 14px;
+          background: rgba(5,10,18,.72);
+          color: rgba(245,248,251,.72);
+          font-weight: 800;
+          border-bottom: 1px solid rgba(172,200,201,.20);
+        }
+        .glass-table td {
+          padding: 13px 14px;
+          background: rgba(5,10,18,.46);
+          color: rgba(248,251,255,.92);
+          border-bottom: 1px solid rgba(172,200,201,.13);
+        }
+        .glass-table tr:last-child td { border-bottom: 0; }
+        .glass-pill {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 48px;
+          padding: 4px 9px;
+          border-radius: 999px;
+          border: 1px solid rgba(203,223,144,.36);
+          background: rgba(77,124,138,.18);
+          color: #F7FFE4;
+          font-weight: 800;
+        }
 
         .stTabs [data-baseweb="tab-list"] { gap: 12px; border-bottom: 1px solid rgba(172,200,201,.12); }
         .stTabs [data-baseweb="tab"] {
@@ -330,9 +373,11 @@ def apply_luminous_ui() -> None:
         .landing-logo-wrap { position: absolute; inset: 0; display: grid; place-items: center; z-index: 5; pointer-events: none; }
         .landing-logo-halo { position: absolute; width: min(550px, 64vw); height: min(330px, 40vw); border-radius: 50%; background: radial-gradient(ellipse at center, rgba(172,200,201,.28), rgba(77,124,138,.14) 38%, transparent 68%); filter: blur(16px); animation: haloPulse 7s ease-in-out infinite; }
         .brand-logo { position: relative; z-index: 2; display: grid; place-items: center; gap: 22px; filter: drop-shadow(0 0 24px rgba(172,200,201,.45)) drop-shadow(0 0 50px rgba(27,64,121,.50)); }
-        .brand-mark { width: min(310px, 38vw); height: auto; overflow: visible; }
-        .brand-mark path { fill: #ffffff; }
-        .brand-mark line { stroke: #06101A; stroke-width: 8; stroke-linecap: square; }
+        .brand-mark-css { width: min(310px, 38vw); height: min(150px, 18vw); min-height: 96px; display: flex; align-items: end; justify-content: center; gap: 8px; }
+        .brand-mark-css span { display: block; background: #ffffff; box-shadow: 0 0 16px rgba(255,255,255,.18); }
+        .mark-left { width: 118px; height: 118px; border-radius: 80px 0 0 80px; }
+        .mark-mid { width: 70px; height: 118px; border-radius: 70px 70px 0 0; }
+        .mark-right { width: 118px; height: 118px; border-radius: 78px 0 0 0; }
         .brand-word { font-size: clamp(2.3rem, 5.2vw, 4.6rem); line-height: 1; letter-spacing: .13em; font-weight: 800; color: #ffffff; font-family: Georgia, 'Times New Roman', serif; }
 
         .price-sheet { position: absolute; z-index: 2; width: 235px; min-height: 285px; padding: 24px 22px; border: 1px solid rgba(172,200,201,.26); border-radius: 8px; background: linear-gradient(160deg, rgba(27,64,121,.34), rgba(28,40,46,.72)); box-shadow: 0 20px 50px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.10), 0 0 28px rgba(77,124,138,.12); backdrop-filter: blur(8px); animation: sheetFloat 9s ease-in-out infinite; --dx: 12px; --dy: -16px; --r: -7deg; }
@@ -347,14 +392,13 @@ def apply_luminous_ui() -> None:
         .s5 { right: 26%; bottom: 11%; transform: scale(.78); --r: 7deg; --dx: -10px; --dy: 12px; animation-duration: 9.5s; }
         .s6 { right: 12%; bottom: 26%; transform: scale(.82); --r: 11deg; --dx: 12px; --dy: -12px; animation-duration: 13s; }
         .s7 { left: 44%; top: 2%; transform: scale(.66); --r: -5deg; --dx: 8px; --dy: 20px; animation-duration: 14s; opacity: .58; }
-        .enter-copy { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); z-index: 8; color: rgba(245,248,251,.70); font-size: .92rem; letter-spacing: .12em; text-transform: uppercase; }
 
         @media (max-width: 820px) {
           .landing-click { width: calc(100vw - 24px); height: calc(100vh - 48px); min-height: 680px; }
           .price-sheet { width: 190px; min-height: 235px; padding: 18px; opacity: .68; }
           .s2, .s5, .s7 { display: none; }
           .block-container { padding-left: 1rem; padding-right: 1rem; }
-          .brand-mark { width: min(240px, 48vw); }
+          .brand-mark-css { width: min(240px, 48vw); }
         }
         </style>
         """,
@@ -371,6 +415,33 @@ def _landing_sheet(sheet_class: str, rows: List[Tuple[str, str]]) -> str:
 
 
 def render_landing_page() -> None:
+    st.markdown(
+        """
+        <style>
+        html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
+          height: 100vh !important;
+          max-height: 100vh !important;
+          overflow: hidden !important;
+        }
+        .block-container {
+          max-width: none !important;
+          padding: 0 !important;
+        }
+        .landing-stage {
+          height: 100vh !important;
+          min-height: 100vh !important;
+          margin: 0 calc(50% - 50vw) !important;
+          padding: 12px 18px !important;
+        }
+        .landing-click {
+          width: calc(100vw - 36px) !important;
+          height: calc(100vh - 24px) !important;
+          min-height: 0 !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     services = [
         ("General Physical Exam", "$125.00"),
         ("Audiogram", "$45.00"),
@@ -406,7 +477,6 @@ def render_landing_page() -> None:
           <div class="landing-logo-halo"></div>
           __LOGO__
         </div>
-        <div class="enter-copy">Click anywhere to enter</div>
       </a>
     </div>
     """
