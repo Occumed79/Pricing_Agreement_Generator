@@ -19,12 +19,36 @@ def _is_target_app(path) -> bool:
 
 def _patch_app_source(source: str) -> str:
     patched_lines: list[str] = []
+    skipping_database_url = False
+
     for line in source.splitlines():
-        if line.strip().startswith('haystack = f" {re.sub('):
+        stripped = line.strip()
+
+        if stripped.startswith('haystack = f" {re.sub('):
             patched_lines.append('    cleaned_text = re.sub(r"[^A-Za-zÀ-ÿ.\'’ -]+", " ", text)')
             patched_lines.append('    haystack = f" {cleaned_text.lower()} "')
-        else:
-            patched_lines.append(line)
+            continue
+
+        if line.startswith("def get_database_url()"):
+            patched_lines.append("def get_database_url() -> str:")
+            patched_lines.append('    env_url = os.getenv("DATABASE_URL", "").strip()')
+            patched_lines.append("    if env_url:")
+            patched_lines.append("        return env_url")
+            patched_lines.append("    try:")
+            patched_lines.append('        return str(st.secrets.get("DATABASE_URL", "")).strip()')
+            patched_lines.append("    except Exception:")
+            patched_lines.append('        return ""')
+            skipping_database_url = True
+            continue
+
+        if skipping_database_url:
+            if line.startswith("def database_configured()"):
+                skipping_database_url = False
+                patched_lines.append(line)
+            continue
+
+        patched_lines.append(line)
+
     return "\n".join(patched_lines) + "\n"
 
 
