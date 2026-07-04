@@ -9,7 +9,7 @@ import zipfile
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 import streamlit as st
@@ -19,7 +19,7 @@ from docx.enum.text import WD_COLOR_INDEX
 try:
     import psycopg
     from psycopg.rows import dict_row
-except Exception:  # pragma: no cover - app can still run with bundled templates locally
+except Exception:
     psycopg = None
     dict_row = None
 
@@ -36,7 +36,7 @@ class TemplateMeta:
     category: str
     requires_code: bool
     description: str
-    source: str  # "database", "default", or "session"
+    source: str
     filename: str
     is_default: bool = False
     path: Optional[Path] = None
@@ -50,7 +50,7 @@ DEFAULT_TEMPLATES: List[TemplateMeta] = [
         name="Overseas Medical Pricing Agreement",
         category="Overseas",
         requires_code=True,
-        description="International medical pricing agreement. Gray placeholders are filled with the ISO 4217 currency code selected or detected from the provider country.",
+        description="International medical pricing agreement. Gray highlights are filled with the currency code.",
         source="default",
         filename="Overseas Medical Pricing Agreement.docx",
         is_default=True,
@@ -102,400 +102,94 @@ HIGHLIGHT_TO_FIELD = {
     WD_COLOR_INDEX.GRAY_50: "code",
 }
 
-FIELD_LABELS = {
-    "name": "Yellow / Provider name",
-    "address": "Green / Address",
-    "date": "Blue or cyan / Date",
-    "code": "Gray / Currency code",
-}
-
-# Offline country -> ISO 4217 currency code map. This avoids internet/API dependency.
-# Countries sharing a currency intentionally point to the same code, e.g. Germany/France -> EUR.
 COUNTRY_CURRENCY: Dict[str, str] = {
-    "Afghanistan": "AFN",
-    "Albania": "ALL",
-    "Algeria": "DZD",
-    "Andorra": "EUR",
-    "Angola": "AOA",
-    "Antigua and Barbuda": "XCD",
-    "Argentina": "ARS",
-    "Armenia": "AMD",
     "Australia": "AUD",
     "Austria": "EUR",
-    "Azerbaijan": "AZN",
-    "Bahamas": "BSD",
-    "Bahrain": "BHD",
-    "Bangladesh": "BDT",
-    "Barbados": "BBD",
-    "Belarus": "BYN",
     "Belgium": "EUR",
-    "Belize": "BZD",
-    "Benin": "XOF",
-    "Bhutan": "BTN",
-    "Bolivia": "BOB",
-    "Bosnia and Herzegovina": "BAM",
-    "Botswana": "BWP",
     "Brazil": "BRL",
-    "Brunei": "BND",
-    "Bulgaria": "BGN",
-    "Burkina Faso": "XOF",
-    "Burundi": "BIF",
-    "Cabo Verde": "CVE",
-    "Cambodia": "KHR",
-    "Cameroon": "XAF",
     "Canada": "CAD",
-    "Central African Republic": "XAF",
-    "Chad": "XAF",
-    "Chile": "CLP",
     "China": "CNY",
-    "Colombia": "COP",
-    "Comoros": "KMF",
-    "Congo": "XAF",
-    "Costa Rica": "CRC",
-    "Croatia": "EUR",
-    "Cuba": "CUP",
-    "Cyprus": "EUR",
-    "Czech Republic": "CZK",
     "Denmark": "DKK",
-    "Djibouti": "DJF",
-    "Dominica": "XCD",
-    "Dominican Republic": "DOP",
-    "Ecuador": "USD",
-    "Egypt": "EGP",
-    "El Salvador": "USD",
-    "Equatorial Guinea": "XAF",
-    "Eritrea": "ERN",
-    "Estonia": "EUR",
-    "Eswatini": "SZL",
-    "Ethiopia": "ETB",
-    "Fiji": "FJD",
-    "Finland": "EUR",
     "France": "EUR",
-    "Gabon": "XAF",
-    "Gambia": "GMD",
-    "Georgia": "GEL",
     "Germany": "EUR",
-    "Ghana": "GHS",
-    "Greece": "EUR",
-    "Grenada": "XCD",
-    "Guatemala": "GTQ",
-    "Guinea": "GNF",
-    "Guinea-Bissau": "XOF",
-    "Guyana": "GYD",
-    "Haiti": "HTG",
-    "Honduras": "HNL",
-    "Hong Kong": "HKD",
-    "Hungary": "HUF",
-    "Iceland": "ISK",
     "India": "INR",
-    "Indonesia": "IDR",
-    "Iran": "IRR",
-    "Iraq": "IQD",
     "Ireland": "EUR",
     "Israel": "ILS",
     "Italy": "EUR",
-    "Ivory Coast": "XOF",
-    "Jamaica": "JMD",
     "Japan": "JPY",
-    "Jordan": "JOD",
-    "Kazakhstan": "KZT",
-    "Kenya": "KES",
-    "Kuwait": "KWD",
-    "Kyrgyzstan": "KGS",
-    "Laos": "LAK",
-    "Latvia": "EUR",
-    "Lebanon": "LBP",
-    "Lesotho": "LSL",
-    "Liberia": "LRD",
-    "Libya": "LYD",
-    "Liechtenstein": "CHF",
-    "Lithuania": "EUR",
-    "Luxembourg": "EUR",
-    "Macau": "MOP",
-    "Madagascar": "MGA",
-    "Malawi": "MWK",
-    "Malaysia": "MYR",
-    "Maldives": "MVR",
-    "Mali": "XOF",
-    "Malta": "EUR",
-    "Mauritania": "MRU",
-    "Mauritius": "MUR",
     "Mexico": "MXN",
-    "Moldova": "MDL",
-    "Monaco": "EUR",
-    "Mongolia": "MNT",
-    "Montenegro": "EUR",
-    "Morocco": "MAD",
-    "Mozambique": "MZN",
-    "Myanmar": "MMK",
-    "Namibia": "NAD",
-    "Nepal": "NPR",
     "Netherlands": "EUR",
     "New Zealand": "NZD",
-    "Nicaragua": "NIO",
-    "Niger": "XOF",
-    "Nigeria": "NGN",
-    "North Macedonia": "MKD",
     "Norway": "NOK",
-    "Oman": "OMR",
-    "Pakistan": "PKR",
-    "Panama": "PAB",
-    "Papua New Guinea": "PGK",
-    "Paraguay": "PYG",
-    "Peru": "PEN",
     "Philippines": "PHP",
-    "Poland": "PLN",
-    "Portugal": "EUR",
-    "Qatar": "QAR",
-    "Romania": "RON",
-    "Russia": "RUB",
-    "Rwanda": "RWF",
-    "Saint Kitts and Nevis": "XCD",
-    "Saint Lucia": "XCD",
-    "Saint Vincent and the Grenadines": "XCD",
-    "Samoa": "WST",
-    "San Marino": "EUR",
     "Saudi Arabia": "SAR",
-    "Senegal": "XOF",
-    "Serbia": "RSD",
-    "Seychelles": "SCR",
-    "Sierra Leone": "SLE",
-    "Singapore": "SGD",
-    "Slovakia": "EUR",
-    "Slovenia": "EUR",
-    "Solomon Islands": "SBD",
-    "Somalia": "SOS",
     "South Africa": "ZAR",
     "South Korea": "KRW",
     "Spain": "EUR",
-    "Sri Lanka": "LKR",
-    "Sudan": "SDG",
-    "Suriname": "SRD",
     "Sweden": "SEK",
     "Switzerland": "CHF",
-    "Syria": "SYP",
-    "Taiwan": "TWD",
-    "Tajikistan": "TJS",
-    "Tanzania": "TZS",
     "Thailand": "THB",
-    "Togo": "XOF",
-    "Tonga": "TOP",
-    "Trinidad and Tobago": "TTD",
-    "Tunisia": "TND",
     "Turkey": "TRY",
-    "Turkmenistan": "TMT",
-    "Uganda": "UGX",
-    "Ukraine": "UAH",
     "United Arab Emirates": "AED",
     "United Kingdom": "GBP",
     "United States": "USD",
-    "Uruguay": "UYU",
-    "Uzbekistan": "UZS",
-    "Vanuatu": "VUV",
-    "Venezuela": "VES",
-    "Vietnam": "VND",
-    "Yemen": "YER",
-    "Zambia": "ZMW",
-    "Zimbabwe": "ZWL",
 }
 
-COUNTRY_ALIASES: Dict[str, str] = {
-    "uae": "United Arab Emirates",
-    "u.a.e.": "United Arab Emirates",
-    "emirates": "United Arab Emirates",
+COUNTRY_ALIASES = {
+    "usa": "United States",
+    "us": "United States",
+    "u.s.": "United States",
+    "u.s.a.": "United States",
+    "america": "United States",
     "uk": "United Kingdom",
     "u.k.": "United Kingdom",
-    "great britain": "United Kingdom",
-    "britain": "United Kingdom",
     "england": "United Kingdom",
     "scotland": "United Kingdom",
     "wales": "United Kingdom",
-    "northern ireland": "United Kingdom",
-    "usa": "United States",
-    "u.s.a.": "United States",
-    "us": "United States",
-    "u.s.": "United States",
-    "america": "United States",
-    "united states of america": "United States",
-    "new zealand": "New Zealand",
-    "nz": "New Zealand",
-    "aotearoa": "New Zealand",
+    "uae": "United Arab Emirates",
+    "u.a.e.": "United Arab Emirates",
+    "emirates": "United Arab Emirates",
     "korea": "South Korea",
     "republic of korea": "South Korea",
-    "south korea": "South Korea",
-    "viet nam": "Vietnam",
-    "cote d'ivoire": "Ivory Coast",
-    "côte d’ivoire": "Ivory Coast",
-    "côte d'ivoire": "Ivory Coast",
-    "ivory coast": "Ivory Coast",
-    "czechia": "Czech Republic",
-    "macedonia": "North Macedonia",
-    "russian federation": "Russia",
-    "hong kong sar": "Hong Kong",
-    "hong kong, china": "Hong Kong",
-    "macau sar": "Macau",
-    "macao": "Macau",
+    "nz": "New Zealand",
 }
 
-# Longest first prevents matching "Congo" inside a longer country if both exist.
 COUNTRY_PATTERNS: List[Tuple[str, str]] = sorted(
-    [(name.lower(), name) for name in COUNTRY_CURRENCY] + [(alias, canonical) for alias, canonical in COUNTRY_ALIASES.items()],
+    [(country.lower(), country) for country in COUNTRY_CURRENCY] + list(COUNTRY_ALIASES.items()),
     key=lambda item: len(item[0]),
     reverse=True,
 )
 
 
-# -----------------------------
-# UI styling
-# -----------------------------
-def inject_css() -> None:
+def page_style() -> None:
+    st.set_page_config(page_title=APP_TITLE, page_icon="📄", layout="wide")
     st.markdown(
         """
         <style>
-        :root {
-            --glass-bg: rgba(13, 24, 43, 0.54);
-            --glass-border: rgba(255, 255, 255, 0.22);
-            --glow-a: rgba(125, 211, 252, 0.42);
-            --glow-b: rgba(168, 85, 247, 0.34);
-            --glow-c: rgba(34, 211, 238, 0.26);
-            --text-muted: rgba(226, 232, 240, 0.80);
-        }
-
         .stApp {
             background:
-                radial-gradient(circle at 10% 15%, rgba(125, 211, 252, 0.30), transparent 31%),
-                radial-gradient(circle at 86% 10%, rgba(168, 85, 247, 0.27), transparent 34%),
-                radial-gradient(circle at 58% 84%, rgba(20, 184, 166, 0.21), transparent 29%),
-                linear-gradient(135deg, #06101f 0%, #0a1020 52%, #0b1325 100%);
-            color: #f8fafc;
+              radial-gradient(circle at 12% 18%, rgba(99, 210, 255, .18), transparent 34%),
+              radial-gradient(circle at 84% 10%, rgba(155, 92, 255, .24), transparent 36%),
+              linear-gradient(135deg, #071421 0%, #11142a 50%, #050914 100%);
+            color: #f5f7fb;
         }
-
-        .block-container {
-            padding-top: 2.4rem;
-            padding-bottom: 4rem;
-            max-width: 1180px;
-        }
-
         [data-testid="stHeader"] { background: transparent; }
-
-        .hero-card, .glass-card, .metric-card, .status-pill {
-            position: relative;
-            border: 1px solid var(--glass-border);
-            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.06));
-            box-shadow:
-                0 0 0 1px rgba(255,255,255,0.06) inset,
-                0 18px 55px rgba(0,0,0,0.30),
-                0 0 34px var(--glow-a),
-                0 0 76px var(--glow-b),
-                0 0 110px var(--glow-c);
-            backdrop-filter: blur(23px) saturate(185%);
-            -webkit-backdrop-filter: blur(23px) saturate(185%);
-            border-radius: 28px;
-        }
-
-        .hero-card {
-            padding: 30px 34px;
+        .hero {
+            padding: 34px 38px;
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 26px;
+            background: linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,.05));
+            box-shadow: 0 28px 90px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.15);
+            backdrop-filter: blur(20px) saturate(150%);
             margin-bottom: 22px;
-            overflow: hidden;
         }
-
-        .hero-card:before {
-            content: "";
-            position: absolute;
-            inset: -2px;
-            background:
-                linear-gradient(90deg, transparent, rgba(255,255,255,0.38), transparent),
-                radial-gradient(circle at 20% 0%, rgba(125,211,252,0.42), transparent 34%);
-            opacity: 0.48;
-            pointer-events: none;
-        }
-
-        .hero-title {
-            font-size: clamp(2.1rem, 5vw, 4.3rem);
-            line-height: 0.95;
-            font-weight: 850;
-            letter-spacing: -0.06em;
-            margin: 0 0 12px;
-            color: #ffffff;
-            text-shadow: 0 0 38px rgba(125, 211, 252, 0.68);
-        }
-
-        .hero-subtitle {
-            max-width: 830px;
-            color: var(--text-muted);
-            font-size: 1.05rem;
-            margin: 0;
-        }
-
-        .glass-card {
-            padding: 18px 20px;
-            margin: 14px 0 18px;
-        }
-
-        .glass-card h3 { margin-top: 0; margin-bottom: 8px; }
-        .glass-card p, .glass-card li { color: var(--text-muted); }
-
-        .status-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 9px 13px;
-            border-radius: 999px;
-            font-weight: 750;
-            margin: 2px 0 12px;
-        }
-
-        .metric-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 12px;
-            margin: 12px 0 18px;
-        }
-
-        .metric-card {
-            padding: 14px 16px;
-            border-radius: 20px;
-        }
-
-        .metric-value {
-            font-size: 1.9rem;
-            font-weight: 800;
-            letter-spacing: -0.04em;
-        }
-
-        .metric-label { color: var(--text-muted); font-size: 0.86rem; }
-
-        div[data-testid="stTabs"] button { border-radius: 999px !important; }
-
-        .stButton > button, .stDownloadButton > button {
-            border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.24);
-            background: linear-gradient(135deg, rgba(56,189,248,0.92), rgba(168,85,247,0.76));
-            color: white;
-            box-shadow: 0 0 26px rgba(125,211,252,0.42), 0 18px 36px rgba(0,0,0,0.28);
-            font-weight: 760;
-        }
-
-        .stButton > button:hover, .stDownloadButton > button:hover {
-            border-color: rgba(255,255,255,0.58);
-            box-shadow: 0 0 38px rgba(125,211,252,0.60), 0 22px 44px rgba(0,0,0,0.34);
-        }
-
-        [data-testid="stDataFrame"] {
-            border-radius: 20px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.16);
-        }
-
-        code {
-            border-radius: 8px;
-            padding: 0.15rem 0.35rem;
-            background: rgba(255,255,255,0.12) !important;
-        }
-
-        @media (max-width: 760px) {
-            .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .hero-card { padding: 24px 22px; }
+        .hero h1 { margin: 0 0 10px 0; font-size: 2.35rem; letter-spacing: -.04em; }
+        .hero p { color: rgba(245,247,251,.82); font-size: 1.03rem; line-height: 1.65; max-width: 900px; }
+        .status-box {
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.12);
         }
         </style>
         """,
@@ -503,54 +197,20 @@ def inject_css() -> None:
     )
 
 
-def glass_card(title: str, body_html: str) -> None:
-    st.markdown(
-        f"""
-        <div class="glass-card">
-            <h3>{title}</h3>
-            {body_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def status_pill(text: str) -> None:
-    st.markdown(f"<div class='status-pill'>{text}</div>", unsafe_allow_html=True)
-
-
-def metrics_card(counts: Dict[str, int]) -> None:
-    st.markdown(
-        f"""
-        <div class="metric-grid">
-          <div class="metric-card"><div class="metric-value">{counts.get('name', 0)}</div><div class="metric-label">Yellow name markers</div></div>
-          <div class="metric-card"><div class="metric-value">{counts.get('address', 0)}</div><div class="metric-label">Green address markers</div></div>
-          <div class="metric-card"><div class="metric-value">{counts.get('date', 0)}</div><div class="metric-label">Blue date markers</div></div>
-          <div class="metric-card"><div class="metric-value">{counts.get('code', 0)}</div><div class="metric-label">Gray currency markers</div></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-# -----------------------------
-# General helpers
-# -----------------------------
 def today_label() -> str:
     today = date.today()
     return f"{today.strftime('%B')} {today.day}, {today.year}"
 
 
-def safe_filename(value: str, max_length: int = 120) -> str:
-    value = re.sub(r"[\\/:*?\"<>|]+", "-", value)
-    value = re.sub(r"\s+", " ", value).strip()
-    value = value.strip(". ")
-    return (value[:max_length].rstrip() or "Agreement")
+def safe_filename(value: str, max_length: int = 110) -> str:
+    cleaned = re.sub(r"[\\/:*?\"<>|]+", "-", str(value or "Agreement"))
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" .")
+    return (cleaned[:max_length].rstrip() or "Agreement")
 
 
 def slugify(value: str) -> str:
-    value = re.sub(r"[^a-zA-Z0-9]+", "-", value.lower()).strip("-")
-    return value or "template"
+    cleaned = re.sub(r"[^a-zA-Z0-9]+", "-", str(value).lower()).strip("-")
+    return cleaned or "template"
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -573,8 +233,8 @@ def normalize_country(value: str) -> Optional[str]:
 def detect_country_from_text(text: str) -> Optional[str]:
     if not text:
         return None
-    haystack = f" {re.sub(r'[^A-Za-zÀ-ÿ.\'’ -]+', ' ', text).lower()} "
-    haystack = re.sub(r"\s+", " ", haystack)
+    cleaned_text = re.sub(r"[^A-Za-zÀ-ÿ.'’ -]+", " ", text)
+    haystack = f" {re.sub(r'\s+', ' ', cleaned_text).lower()} "
     for pattern, canonical in COUNTRY_PATTERNS:
         pattern_re = re.escape(pattern).replace(r"\ ", r"\s+")
         if re.search(rf"(?<![a-z]){pattern_re}(?![a-z])", haystack):
@@ -582,49 +242,22 @@ def detect_country_from_text(text: str) -> Optional[str]:
     return None
 
 
-def resolve_currency_code(country: Optional[str]) -> str:
+def resolve_currency_code(country: Optional[str], manual_code: str = "") -> str:
+    manual_code = re.sub(r"[^A-Za-z]", "", manual_code or "").upper()[:3]
+    if manual_code:
+        return manual_code
     if not country:
         return ""
     canonical = normalize_country(country) or country
     return COUNTRY_CURRENCY.get(canonical, "")
 
 
-def prepare_records_for_template(records: pd.DataFrame, template: TemplateMeta, selected_country: str) -> pd.DataFrame:
-    """Add country/currency preview columns for overseas templates."""
-    out = records.copy()
-    if not template.requires_code:
-        return out
-
-    resolved_countries: List[str] = []
-    currency_codes: List[str] = []
-    manual_country = selected_country if selected_country != AUTO_DETECT_LABEL else ""
-
-    for _, row in out.iterrows():
-        country = normalize_country(manual_country)
-        if not country and "country" in out.columns:
-            country = normalize_country(str(row.get("country", "")))
-        if not country:
-            country = detect_country_from_text(str(row.get("address", "")))
-        code = resolve_currency_code(country)
-        resolved_countries.append(country or "")
-        currency_codes.append(code or "")
-
-    out["resolved_country"] = resolved_countries
-    out["currency_code"] = currency_codes
-    return out
-
-
-# -----------------------------
-# Neon template library
-# -----------------------------
 def get_database_url() -> str:
-    if "DATABASE_URL" in st.secrets:
-        return str(st.secrets["DATABASE_URL"])
-    return os.getenv("DATABASE_URL", "")
+    return os.getenv("DATABASE_URL", "").strip()
 
 
 def database_configured() -> bool:
-    return bool(get_database_url().strip()) and psycopg is not None
+    return bool(get_database_url()) and psycopg is not None
 
 
 def get_db_connection():
@@ -656,17 +289,14 @@ def ensure_template_table() -> None:
         )
 
 
-def seed_default_templates_to_neon() -> None:
-    """Keep the four bundled templates permanently available in Neon.
+def bundled_templates() -> List[TemplateMeta]:
+    return [template for template in DEFAULT_TEMPLATES if template.path and template.path.exists()]
 
-    This upserts by stable IDs so redeploys do not create duplicates.
-    If the bundled template file changes, the Neon row is updated.
-    """
+
+def seed_default_templates_to_neon() -> None:
     ensure_template_table()
     with get_db_connection() as conn:
-        for template in DEFAULT_TEMPLATES:
-            if not template.path or not template.path.exists():
-                continue
+        for template in bundled_templates():
             data = template.path.read_bytes()
             conn.execute(
                 """
@@ -732,15 +362,7 @@ def load_templates_from_neon() -> List[TemplateMeta]:
     return templates
 
 
-def save_template_to_neon(
-    *,
-    name: str,
-    category: str,
-    requires_code: bool,
-    description: str,
-    filename: str,
-    template_bytes: bytes,
-) -> str:
+def save_template_to_neon(name: str, category: str, requires_code: bool, description: str, filename: str, template_bytes: bytes) -> str:
     ensure_template_table()
     template_id = f"custom-{slugify(name)}-{uuid.uuid4().hex[:8]}"
     with get_db_connection() as conn:
@@ -766,498 +388,287 @@ def save_template_to_neon(
     return template_id
 
 
-def get_default_templates_from_files() -> List[TemplateMeta]:
-    templates: List[TemplateMeta] = []
-    for template in DEFAULT_TEMPLATES:
-        if template.path and template.path.exists():
-            templates.append(template)
-    return templates
-
-
 def get_all_templates() -> Tuple[List[TemplateMeta], str]:
-    """Return templates and a source status string."""
+    session_templates = st.session_state.get("custom_templates", [])
     if database_configured():
         try:
-            templates = load_templates_from_neon()
-            return templates, "Neon template library connected. Templates are saved permanently."
+            return load_templates_from_neon(), "Neon template library connected. Templates are saved permanently."
         except Exception as exc:
             st.session_state["db_error"] = str(exc)
-            templates = get_default_templates_from_files() + st.session_state.get("custom_templates", [])
-            return templates, "Neon is configured, but the app could not connect. Falling back to bundled/session templates."
-
-    templates = get_default_templates_from_files() + st.session_state.get("custom_templates", [])
-    return templates, "Neon is not configured. Bundled templates work, but uploaded custom templates are session-only."
+            return bundled_templates() + session_templates, "Neon is configured but unavailable. Using bundled/session templates."
+    return bundled_templates() + session_templates, "Neon is not configured. Bundled templates work; uploaded custom templates are session-only."
 
 
 def get_template_bytes(template: TemplateMeta) -> bytes:
     if template.bytes_data is not None:
         return template.bytes_data
-    if template.path:
+    if template.path and template.path.exists():
         return template.path.read_bytes()
-    raise ValueError("Template bytes are unavailable.")
+    raise ValueError(f"Template bytes unavailable for {template.name}.")
 
 
-# -----------------------------
-# DOCX processing helpers
-# -----------------------------
-def classify_highlight(highlight) -> Optional[str]:
-    return HIGHLIGHT_TO_FIELD.get(highlight)
+def read_provider_file(uploaded_file) -> pd.DataFrame:
+    name = uploaded_file.name.lower()
+    if name.endswith(".csv"):
+        return pd.read_csv(uploaded_file)
+    return pd.read_excel(uploaded_file)
 
 
-def iter_table_paragraphs(table) -> Iterable:
-    for row in table.rows:
-        for cell in row.cells:
-            for paragraph in cell.paragraphs:
-                yield paragraph
-            for nested_table in cell.tables:
-                yield from iter_table_paragraphs(nested_table)
+def parse_pasted_providers(text: str) -> pd.DataFrame:
+    blocks = [block.strip() for block in re.split(r"\n\s*\n", text or "") if block.strip()]
+    rows = []
+    for block in blocks:
+        lines = [line.strip() for line in block.splitlines() if line.strip()]
+        if not lines:
+            continue
+        rows.append({"clinic_name": lines[0], "address": "\n".join(lines[1:])})
+    return pd.DataFrame(rows)
 
 
-def iter_document_paragraphs(doc: Document) -> Iterable:
-    for paragraph in doc.paragraphs:
+def normalize_provider_rows(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return pd.DataFrame(columns=["clinic_name", "address"])
+    renamed = {str(col).strip().lower(): col for col in df.columns}
+    name_col = next((renamed[key] for key in ["clinic_name", "clinic name", "provider_name", "provider name", "name"] if key in renamed), None)
+    address_col = next((renamed[key] for key in ["address", "clinic_address", "clinic address", "full_address", "full address"] if key in renamed), None)
+    country_col = next((renamed[key] for key in ["country", "country_name", "country name"] if key in renamed), None)
+    if name_col is None or address_col is None:
+        raise ValueError("Provider data must include clinic_name/name and address columns.")
+    out = pd.DataFrame({"clinic_name": df[name_col].fillna("").astype(str), "address": df[address_col].fillna("").astype(str)})
+    if country_col is not None:
+        out["country"] = df[country_col].fillna("").astype(str)
+    out = out[(out["clinic_name"].str.strip() != "") | (out["address"].str.strip() != "")]
+    return out.reset_index(drop=True)
+
+
+def prepare_records_for_template(records: pd.DataFrame, template: TemplateMeta, selected_country: str, manual_code: str) -> pd.DataFrame:
+    out = records.copy()
+    out["date"] = today_label()
+    if not template.requires_code:
+        out["resolved_country"] = ""
+        out["currency_code"] = ""
+        return out
+
+    resolved_countries = []
+    currency_codes = []
+    manual_country = selected_country if selected_country != AUTO_DETECT_LABEL else ""
+    for _, row in out.iterrows():
+        country = normalize_country(manual_country)
+        if not country and "country" in out.columns:
+            country = normalize_country(str(row.get("country", "")))
+        if not country:
+            country = detect_country_from_text(str(row.get("address", "")))
+        code = resolve_currency_code(country, manual_code)
+        resolved_countries.append(country or "")
+        currency_codes.append(code or "")
+    out["resolved_country"] = resolved_countries
+    out["currency_code"] = currency_codes
+    return out
+
+
+def iter_block_paragraphs(document: Document):
+    for paragraph in document.paragraphs:
         yield paragraph
-    for table in doc.tables:
-        yield from iter_table_paragraphs(table)
-    for section in doc.sections:
-        for part in (section.header, section.footer):
-            for paragraph in part.paragraphs:
-                yield paragraph
-            for table in part.tables:
-                yield from iter_table_paragraphs(table)
+    for table in document.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    yield paragraph
 
 
-def scan_template(template_bytes: bytes) -> Dict[str, int]:
-    doc = Document(io.BytesIO(template_bytes))
+def values_for_record(row: pd.Series) -> Dict[str, str]:
+    return {
+        "name": str(row.get("clinic_name", "")).strip(),
+        "address": str(row.get("address", "")).strip(),
+        "date": today_label(),
+        "code": str(row.get("currency_code", "")).strip(),
+    }
+
+
+def replace_highlighted_runs(paragraph, values: Dict[str, str]) -> Dict[str, int]:
     counts = {"name": 0, "address": 0, "date": 0, "code": 0}
-    for paragraph in iter_document_paragraphs(doc):
-        for run in paragraph.runs:
-            if not run.text.strip():
-                continue
-            field = classify_highlight(run.font.highlight_color)
-            if field:
-                counts[field] += 1
+    active_field = None
+    for run in paragraph.runs:
+        field = HIGHLIGHT_TO_FIELD.get(run.font.highlight_color)
+        if field is None:
+            active_field = None
+            continue
+        if field != active_field:
+            run.text = values.get(field, "")
+            counts[field] += 1
+            active_field = field
+        else:
+            run.text = ""
+        run.font.highlight_color = None
     return counts
 
 
-def collect_highlighted_runs(doc: Document) -> Dict[str, List]:
-    highlighted_runs = {"name": [], "address": [], "date": [], "code": [], "address_indexed": []}
-    for paragraph_index, paragraph in enumerate(iter_document_paragraphs(doc)):
-        for run in paragraph.runs:
-            field = classify_highlight(run.font.highlight_color)
-            if field:
-                highlighted_runs[field].append(run)
-                if field == "address":
-                    highlighted_runs["address_indexed"].append((paragraph_index, run))
-    return highlighted_runs
+def generate_document(template: TemplateMeta, row: pd.Series) -> Tuple[bytes, Dict[str, int]]:
+    document = Document(io.BytesIO(get_template_bytes(template)))
+    values = values_for_record(row)
+    total_counts = {"name": 0, "address": 0, "date": 0, "code": 0}
+    for paragraph in iter_block_paragraphs(document):
+        counts = replace_highlighted_runs(paragraph, values)
+        for key, value in counts.items():
+            total_counts[key] += value
+    output = io.BytesIO()
+    document.save(output)
+    return output.getvalue(), total_counts
 
 
-def set_run_text_preserve_linebreaks(run, text: str) -> None:
-    """Replace a run while preserving Word line breaks for pasted multi-line addresses."""
-    run.text = ""
-    parts = str(text).split("\n")
-    for i, part in enumerate(parts):
-        if i > 0:
-            run.add_break()
-        run.add_text(part)
-
-
-def clear_highlight(run) -> None:
-    run.font.highlight_color = None
-
-
-def split_address_groups(address_indexed_runs: List[Tuple[int, object]]) -> List[List]:
-    """Group address placeholders that appear together in the same header/block.
-
-    Some templates repeat the provider header on more than one page. Each header has its own
-    Address 1 / Address 2 / Address 3 markers. This groups nearby green markers so the full
-    address is filled once per header block instead of only once globally.
-    """
-    if not address_indexed_runs:
-        return []
-
-    groups: List[List] = []
-    current: List = []
-    last_index: Optional[int] = None
-    for paragraph_index, run in address_indexed_runs:
-        if last_index is None or paragraph_index - last_index <= 2:
-            current.append(run)
-        else:
-            groups.append(current)
-            current = [run]
-        last_index = paragraph_index
-    if current:
-        groups.append(current)
-    return groups
-
-
-def replace_single_address_group(address_runs: List, address: str) -> None:
-    """Fill one group of Address 1 / Address 2 / Address 3 style markers."""
-    if not address_runs:
-        return
-    lines = [line.strip() for line in str(address).splitlines() if line.strip()]
-    if not lines:
-        lines = [str(address).strip()]
-
-    if len(address_runs) == 1:
-        assignments = ["\n".join(lines)]
-    elif len(lines) <= len(address_runs):
-        assignments = lines + [""] * (len(address_runs) - len(lines))
-    else:
-        assignments = lines[: len(address_runs) - 1]
-        assignments.append("\n".join(lines[len(address_runs) - 1 :]))
-
-    for run, value in zip(address_runs, assignments):
-        set_run_text_preserve_linebreaks(run, value)
-        clear_highlight(run)
-    for run in address_runs[len(assignments) :]:
-        set_run_text_preserve_linebreaks(run, "")
-        clear_highlight(run)
-
-
-def replace_address_markers(address_indexed_runs: List[Tuple[int, object]], address: str) -> None:
-    for group in split_address_groups(address_indexed_runs):
-        replace_single_address_group(group, address)
-
-
-def replace_markers_in_docx(
-    template_bytes: bytes,
-    clinic_name: str,
-    address: str,
-    effective_date: str,
-    currency_code: str = "",
-) -> bytes:
-    doc = Document(io.BytesIO(template_bytes))
-    highlighted_runs = collect_highlighted_runs(doc)
-
-    for field, value in {
-        "name": clinic_name,
-        "date": effective_date,
-        "code": currency_code,
-    }.items():
-        for run in highlighted_runs.get(field, []):
-            set_run_text_preserve_linebreaks(run, value)
-            clear_highlight(run)
-
-    replace_address_markers(highlighted_runs.get("address_indexed", []), address)
-
-    out = io.BytesIO()
-    doc.save(out)
-    return out.getvalue()
-
-
-def build_zip(records: pd.DataFrame, template: TemplateMeta) -> bytes:
-    template_bytes = get_template_bytes(template)
-    generated_on = date.today().isoformat()
-    effective_date = today_label()
-
+def make_zip(template: TemplateMeta, records: pd.DataFrame) -> Tuple[bytes, List[Dict[str, object]]]:
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
-        for _, row in records.iterrows():
-            clinic_name = str(row["clinic_name"]).strip()
-            address = str(row["address"]).strip()
-            currency_code = str(row.get("currency_code", "")).strip().upper() if template.requires_code else ""
-            docx_bytes = replace_markers_in_docx(
-                template_bytes=template_bytes,
-                clinic_name=clinic_name,
-                address=address,
-                effective_date=effective_date,
-                currency_code=currency_code,
-            )
-            filename = safe_filename(f"{clinic_name} - {template.name} - {generated_on}.docx")
-            zf.writestr(filename, docx_bytes)
-
+    manifest: List[Dict[str, object]] = []
+    with zipfile.ZipFile(zip_buffer, "w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+        for idx, row in records.iterrows():
+            doc_bytes, counts = generate_document(template, row)
+            provider_name = str(row.get("clinic_name", f"Provider {idx + 1}")).strip() or f"Provider {idx + 1}"
+            filename = f"{idx + 1:03d} - {safe_filename(provider_name)} - {safe_filename(template.name)}.docx"
+            zip_file.writestr(filename, doc_bytes)
+            manifest.append({"file": filename, "clinic_name": provider_name, **counts})
+        manifest_df = pd.DataFrame(manifest)
+        zip_file.writestr("manifest.csv", manifest_df.to_csv(index=False).encode("utf-8"))
     zip_buffer.seek(0)
-    return zip_buffer.getvalue()
+    return zip_buffer.getvalue(), manifest
 
 
-# -----------------------------
-# Input parsing
-# -----------------------------
-def parse_spreadsheet(uploaded_file) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
-    if uploaded_file is None:
-        return None, None
-
-    try:
-        name = uploaded_file.name.lower()
-        if name.endswith(".csv"):
-            df = pd.read_csv(uploaded_file)
-        else:
-            df = pd.read_excel(uploaded_file)
-    except Exception as exc:
-        return None, f"Could not read the spreadsheet: {exc}"
-
-    df.columns = [str(col).strip() for col in df.columns]
-    required = {"clinic_name", "address"}
-    missing = sorted(required - set(df.columns))
-    if missing:
-        return None, "Missing required header(s): " + ", ".join(f"`{item}`" for item in missing)
-
-    keep_cols = ["clinic_name", "address"]
-    if "country" in df.columns:
-        keep_cols.append("country")
-    clean = df[keep_cols].copy()
-    clean["clinic_name"] = clean["clinic_name"].astype(str).str.strip()
-    clean["address"] = clean["address"].astype(str).str.strip()
-    if "country" in clean.columns:
-        clean["country"] = clean["country"].astype(str).str.strip()
-    clean = clean[(clean["clinic_name"] != "") & (clean["address"] != "")]
-
-    if clean.empty:
-        return None, "The spreadsheet has the right headers, but no usable provider rows were found."
-
-    return clean.reset_index(drop=True), None
-
-
-def parse_pasted_providers(text: str) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
-    if not text.strip():
-        return None, None
-
-    blocks = re.split(r"\n\s*\n+", text.strip())
-    rows = []
-    skipped = []
-    for index, block in enumerate(blocks, start=1):
-        lines = [line.strip() for line in block.splitlines() if line.strip()]
-        if len(lines) < 2:
-            skipped.append(index)
-            continue
-        rows.append({"clinic_name": lines[0], "address": "\n".join(lines[1:])})
-
-    if not rows:
-        return None, "No valid provider blocks were found. Each provider needs a clinic name and at least one address line."
-
-    df = pd.DataFrame(rows)
-    if skipped:
-        return df, f"Parsed {len(df)} provider(s). Skipped block(s) {', '.join(map(str, skipped))} because they did not include an address."
-    return df, None
-
-
-# -----------------------------
-# App pages
-# -----------------------------
 def render_generate_tab() -> None:
     templates, status = get_all_templates()
-
-    st.subheader("Generate Agreements")
-    status_pill(status)
-    if st.session_state.get("db_error"):
-        with st.expander("Neon connection detail", expanded=False):
-            st.code(st.session_state["db_error"])
-
-    glass_card(
-        "Quick flow",
-        "<p>Select a saved template, add providers by spreadsheet or paste box, preview the list, then generate a downloadable ZIP. Templates are permanent in Neon; output files are temporary and are not saved.</p>",
-    )
-
+    st.markdown(f"<div class='status-box'>{status}</div>", unsafe_allow_html=True)
+    if "db_error" in st.session_state:
+        st.warning(f"Neon fallback reason: {st.session_state['db_error']}")
     if not templates:
-        st.error("No templates were found. Add the default templates to the templates folder or connect Neon.")
+        st.error("No templates found. Upload .docx templates into the templates folder or use Configure Templates.")
         return
 
-    selected_template = st.selectbox(
-        "Select template",
-        templates,
-        format_func=lambda item: f"{item.category} — {item.name}",
-    )
+    selected_name = st.selectbox("Template", [template.name for template in templates])
+    template = next(item for item in templates if item.name == selected_name)
+    st.caption(template.description)
 
-    with st.expander("Template details", expanded=False):
-        st.write(selected_template.description or "No description provided.")
-        st.write("Template source:", selected_template.source)
-        st.write("Requires currency code:", "Yes" if selected_template.requires_code else "No")
-        if selected_template.file_sha256:
-            st.write("SHA-256:", selected_template.file_sha256)
-        try:
-            counts = scan_template(get_template_bytes(selected_template))
-            metrics_card(counts)
-        except Exception as exc:
-            st.warning(f"Could not scan this template: {exc}")
-
+    countries = [AUTO_DETECT_LABEL] + sorted(COUNTRY_CURRENCY)
     selected_country = AUTO_DETECT_LABEL
-    if selected_template.requires_code:
-        glass_card(
-            "Overseas currency handling",
-            "<p>The gray highlighted template markers are filled automatically with the ISO 4217 currency code. No one needs to type the three-letter code.</p><p>Select one country for the whole batch, or let the app detect the country from each provider address.</p>",
-        )
-        country_options = [AUTO_DETECT_LABEL] + sorted(COUNTRY_CURRENCY.keys())
-        selected_country = st.selectbox("Country for currency code", country_options, index=0)
-        if selected_country != AUTO_DETECT_LABEL:
-            st.info(f"Resolved currency code: {COUNTRY_CURRENCY[selected_country]}")
+    manual_code = ""
+    if template.requires_code:
+        selected_country = st.selectbox("Overseas country for this batch", countries)
+        manual_code = st.text_input("Optional manual 3-letter currency code override", max_chars=3).upper()
 
-    input_method = st.radio(
-        "Provider input method",
-        ["Upload Excel/CSV", "Paste providers manually"],
-        horizontal=True,
-    )
-
-    records = None
-    message = None
-
-    if input_method == "Upload Excel/CSV":
-        glass_card(
-            "Spreadsheet requirements",
-            "<p>Your file must include these exact headers:</p><ul><li><code>clinic_name</code></li><li><code>address</code></li></ul><p>Optional for overseas: <code>country</code>. Each row becomes one generated agreement.</p>",
-        )
-        upload = st.file_uploader("Upload Excel or CSV", type=["xlsx", "csv"], key="provider_sheet")
-        records, message = parse_spreadsheet(upload)
-    else:
-        glass_card(
-            "Paste format",
-            "<p>First line of each block is <code>clinic_name</code>. Remaining lines are the full address. Use a blank line between providers.</p><p>For overseas templates, include the country in the address or select the country above.</p>",
-        )
-        sample = "Health Tick\nLevel 1, 19 Byron Avenue\nTakapuna, Auckland 0622\nNew Zealand\n\nABC Medical Clinic\n123 Main Street\nFresno, CA 93711"
-        text = st.text_area("Paste providers", height=230, placeholder=sample)
-        records, message = parse_pasted_providers(text)
-
-    if message:
-        if records is not None and not records.empty:
-            st.info(message)
-        else:
-            st.warning(message)
-
-    if records is not None and not records.empty:
-        records_for_generation = prepare_records_for_template(records, selected_template, selected_country)
-
-        st.markdown(f"### Preview — {len(records_for_generation)} agreement(s) will be generated")
-        st.dataframe(records_for_generation, use_container_width=True, hide_index=True)
-
-        can_generate = True
-        if selected_template.requires_code:
-            unresolved = records_for_generation[records_for_generation["currency_code"].astype(str).str.strip() == ""]
-            if not unresolved.empty:
-                can_generate = False
-                st.error(
-                    "The app could not resolve a currency code for every provider. Select one country for the whole batch or add the country to each address."
-                )
-
-        if st.button("Generate Agreements ZIP", type="primary", disabled=not can_generate):
+    input_mode = st.radio("Provider input", ["Upload Excel/CSV", "Paste providers"], horizontal=True)
+    records = pd.DataFrame()
+    if input_mode == "Upload Excel/CSV":
+        uploaded = st.file_uploader("Upload spreadsheet", type=["xlsx", "xlsm", "xls", "csv"])
+        if uploaded:
             try:
-                zip_bytes = build_zip(records_for_generation, selected_template)
-                zip_name = f"Generated Agreements - {date.today().isoformat()}.zip"
-                st.session_state["latest_zip"] = zip_bytes
-                st.session_state["latest_zip_name"] = zip_name
-                st.success("Agreements generated. Download the ZIP below.")
+                records = normalize_provider_rows(read_provider_file(uploaded))
             except Exception as exc:
-                st.error(f"Generation failed: {exc}")
+                st.error(str(exc))
+    else:
+        sample = "Clinic Name\n123 Main St\nCity, Country\n\nNext Clinic\n456 Second St\nCity, Country"
+        pasted = st.text_area("Paste one provider block at a time", value="", placeholder=sample, height=220)
+        if pasted.strip():
+            try:
+                records = normalize_provider_rows(parse_pasted_providers(pasted))
+            except Exception as exc:
+                st.error(str(exc))
 
-    if st.session_state.get("latest_zip"):
-        st.download_button(
-            "Download generated ZIP",
-            data=st.session_state["latest_zip"],
-            file_name=st.session_state.get("latest_zip_name", "Generated Agreements.zip"),
-            mime="application/zip",
-        )
+    if records.empty:
+        st.info("Add providers to continue. Required fields are clinic_name/name and address.")
+        return
+
+    prepared = prepare_records_for_template(records, template, selected_country, manual_code)
+    if template.requires_code and prepared["currency_code"].eq("").any():
+        st.warning("Some overseas rows do not have a currency code. Select a country or enter a manual 3-letter code before generating.")
+    st.subheader("Preview")
+    st.dataframe(prepared, use_container_width=True, hide_index=True)
+
+    if st.button("Generate agreements", type="primary"):
+        try:
+            zip_bytes, manifest = make_zip(template, prepared)
+            st.success(f"Generated {len(manifest)} agreement(s).")
+            st.download_button(
+                "Download ZIP",
+                data=zip_bytes,
+                file_name=f"pricing-agreements-{date.today().isoformat()}.zip",
+                mime="application/zip",
+            )
+            st.dataframe(pd.DataFrame(manifest), use_container_width=True, hide_index=True)
+        except Exception as exc:
+            st.error(f"Generation failed: {exc}")
 
 
 def render_configure_tab() -> None:
-    st.subheader("Configure New Agreement Template")
+    st.subheader("Saved templates")
     templates, status = get_all_templates()
-    status_pill(status)
-
-    glass_card(
-        "Before uploading your template",
-        """
-        <ul>
-          <li>File must be <code>.docx</code>. Do not upload <code>.doc</code>.</li>
-          <li>Highlight provider/clinic name placeholders in <strong>yellow</strong>.</li>
-          <li>Highlight address placeholders in <strong>green</strong>.</li>
-          <li>Highlight date placeholders in <strong>blue/light blue</strong>.</li>
-          <li>Highlight currency/code placeholders in <strong>gray</strong> only if the template needs them.</li>
-          <li>Do not highlight labels. Only highlight the exact text that should be replaced.</li>
-        </ul>
-        <p>When Neon is connected, configured templates are saved permanently in the template library. Generated output files are still download-only and not retained.</p>
-        """,
-    )
-
-    template_name = st.text_input("Template name", placeholder="Example: Urgent Care Pricing Agreement")
-    category = st.text_input("Template category", placeholder="Example: United States - Urgent Care")
-    requires_code = st.toggle("Requires automatic overseas currency code", value=False)
-    description = st.text_area("Optional description", height=95)
-    uploaded_template = st.file_uploader("Upload .docx template", type=["docx"], key="custom_template_upload")
-
-    if uploaded_template is not None:
-        template_bytes = uploaded_template.getvalue()
-        try:
-            counts = scan_template(template_bytes)
-            st.markdown("### Template validation")
-            metrics_card(counts)
-
-            if counts["name"] == 0 or counts["address"] == 0 or counts["date"] == 0:
-                st.warning("This template may be missing required yellow, green, or blue placeholders.")
-            if requires_code and counts["code"] == 0:
-                st.warning("This template is marked as requiring an automatic overseas currency code, but no gray placeholders were found.")
-
-            neon_ready = database_configured()
-            save_label = "Save template to Neon library" if neon_ready else "Save template for this session"
-            if st.button(save_label, type="primary"):
-                if not template_name.strip():
-                    st.error("Enter a template name before saving.")
-                elif not category.strip():
-                    st.error("Enter a template category before saving.")
-                elif neon_ready:
-                    try:
-                        save_template_to_neon(
-                            name=template_name.strip(),
-                            category=category.strip(),
-                            requires_code=requires_code,
-                            description=description.strip(),
-                            filename=safe_filename(uploaded_template.name),
-                            template_bytes=template_bytes,
-                        )
-                        st.success("Template saved permanently to Neon. It is now available in Generate Agreements.")
-                        st.rerun()
-                    except Exception as exc:
-                        st.error(f"Could not save to Neon: {exc}")
-                else:
-                    custom = TemplateMeta(
-                        id=f"session-{slugify(template_name)}-{uuid.uuid4().hex[:8]}",
-                        name=template_name.strip(),
-                        category=category.strip(),
-                        requires_code=requires_code,
-                        description=description.strip(),
-                        source="session",
-                        filename=safe_filename(uploaded_template.name),
-                        bytes_data=template_bytes,
-                        file_sha256=sha256_bytes(template_bytes),
-                    )
-                    st.session_state.setdefault("custom_templates", []).append(custom)
-                    st.warning("Template saved for this browser session only because Neon is not connected.")
-        except Exception as exc:
-            st.error(f"Could not validate this template: {exc}")
-
+    st.caption(status)
     if templates:
-        st.markdown("### Template library")
-        library_df = pd.DataFrame(
-            [
-                {
-                    "template_name": item.name,
-                    "category": item.category,
-                    "requires_currency_code": "Yes" if item.requires_code else "No",
-                    "source": item.source,
-                    "default": "Yes" if item.is_default else "No",
-                    "description": item.description,
-                }
-                for item in templates
-            ]
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "name": template.name,
+                        "category": template.category,
+                        "requires_code": template.requires_code,
+                        "source": template.source,
+                        "filename": template.filename,
+                    }
+                    for template in templates
+                ]
+            ),
+            use_container_width=True,
+            hide_index=True,
         )
-        st.dataframe(library_df, use_container_width=True, hide_index=True)
+
+    st.subheader("Upload custom template")
+    with st.form("template_upload_form", clear_on_submit=True):
+        name = st.text_input("Template name")
+        category = st.text_input("Category", value="Custom")
+        description = st.text_area("Description", value="Custom pricing agreement template.")
+        requires_code = st.checkbox("Requires overseas currency code / gray highlighted placeholders")
+        uploaded_template = st.file_uploader("Template .docx", type=["docx"])
+        submitted = st.form_submit_button("Save template")
+
+    if submitted:
+        if not name.strip() or uploaded_template is None:
+            st.error("Template name and .docx file are required.")
+            return
+        template_bytes = uploaded_template.read()
+        if database_configured():
+            try:
+                save_template_to_neon(name.strip(), category.strip() or "Custom", requires_code, description.strip(), uploaded_template.name, template_bytes)
+                st.success("Template saved permanently in Neon.")
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Could not save to Neon: {exc}")
+                return
+        session_template = TemplateMeta(
+            id=f"session-{uuid.uuid4().hex[:8]}",
+            name=name.strip(),
+            category=category.strip() or "Custom",
+            requires_code=requires_code,
+            description=description.strip(),
+            source="session",
+            filename=uploaded_template.name,
+            bytes_data=template_bytes,
+            file_sha256=sha256_bytes(template_bytes),
+        )
+        st.session_state.setdefault("custom_templates", []).append(session_template)
+        st.success("Template saved for this browser session.")
 
 
 def main() -> None:
-    st.set_page_config(page_title=APP_TITLE, page_icon="📄", layout="wide")
-    inject_css()
-
+    page_style()
     st.markdown(
         """
-        <div class="hero-card">
-            <h1 class="hero-title">Pricing Agreement Generator</h1>
-            <p class="hero-subtitle">Generate clean provider agreements from permanently saved Word templates. Upload a spreadsheet or paste providers, let the app resolve overseas currency codes, then download everything as a ZIP.</p>
+        <div class="hero">
+          <h1>Pricing Agreement Generator</h1>
+          <p>Generate provider agreements from saved Word templates. Upload a spreadsheet or paste providers, then download every completed agreement as a ZIP.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
-
-    generate_tab, configure_tab = st.tabs(["Generate Agreements", "Configure Templates"])
-    with generate_tab:
+    tab_generate, tab_configure = st.tabs(["Generate Agreements", "Configure Templates"])
+    with tab_generate:
         render_generate_tab()
-    with configure_tab:
+    with tab_configure:
         render_configure_tab()
 
 
