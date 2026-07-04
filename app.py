@@ -234,7 +234,8 @@ def detect_country_from_text(text: str) -> Optional[str]:
     if not text:
         return None
     cleaned_text = re.sub(r"[^A-Za-zÀ-ÿ.'’ -]+", " ", text)
-    haystack = f" {re.sub(r'\s+', ' ', cleaned_text).lower()} "
+    normalized_text = re.sub(r"\s+", " ", cleaned_text).lower()
+    haystack = f" {normalized_text} "
     for pattern, canonical in COUNTRY_PATTERNS:
         pattern_re = re.escape(pattern).replace(r"\ ", r"\s+")
         if re.search(rf"(?<![a-z]){pattern_re}(?![a-z])", haystack):
