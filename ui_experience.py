@@ -1,19 +1,36 @@
 from __future__ import annotations
 
+import base64
+from pathlib import Path
 from typing import List, Tuple
 
 import streamlit as st
 
 
+ASSET_DIR = Path(__file__).parent / "assets"
+LOGO_PATH = ASSET_DIR / "occu-med-logo.png"
+
+
+def _asset_data_uri(path: Path) -> str:
+    if not path.exists():
+        return ""
+    suffix = path.suffix.lower().lstrip(".") or "png"
+    mime = "image/svg+xml" if suffix == "svg" else f"image/{suffix}"
+    encoded = base64.b64encode(path.read_bytes()).decode("utf-8")
+    return f"data:{mime};base64,{encoded}"
+
+
 def logo_markup() -> str:
+    logo_src = _asset_data_uri(LOGO_PATH)
+    if logo_src:
+        return f"""
+        <div class="brand-logo" aria-label="Occu-Med logo">
+          <img class="brand-image" src="{logo_src}" alt="Occu-Med logo" />
+        </div>
+        """
     return """
-    <div class="brand-logo" aria-label="Occu-Med logo">
-      <div class="brand-mark-css" aria-hidden="true">
-        <span class="mark-left"></span>
-        <span class="mark-mid"></span>
-        <span class="mark-right"></span>
-      </div>
-      <div class="brand-word">OCCU-MED</div>
+    <div class="brand-logo brand-logo-fallback" aria-label="Occu-Med logo">
+      OCCU-MED
     </div>
     """
 
@@ -29,19 +46,14 @@ def apply_luminous_ui() -> None:
           --om-cambridge-2: #8FAD88;
           --om-mindaro: #CBDF90;
           --om-charcoal: #1C282E;
-          --om-slate: #547C86;
           --om-mist: #ACC8C9;
-          --om-sage: #A0B894;
-          --om-olive: #94A85F;
           --om-ink: #050913;
           --glass-line: rgba(172, 200, 201, .30);
-          --glass-inner: rgba(255, 255, 255, .10);
           --text-main: rgba(248, 251, 255, .96);
           --text-soft: rgba(228, 238, 244, .78);
         }
 
         html, body, .stApp { min-height: 100%; }
-
         .stApp {
           color: var(--text-main);
           background:
@@ -50,7 +62,6 @@ def apply_luminous_ui() -> None:
             radial-gradient(circle at 50% 100%, rgba(27,64,121,.36), transparent 44%),
             linear-gradient(135deg, #1C282E 0%, #08111E 50%, #05070D 100%);
         }
-
         .stApp::before {
           content: "";
           position: fixed;
@@ -65,7 +76,6 @@ def apply_luminous_ui() -> None:
             linear-gradient(245deg, transparent 20%, rgba(27,64,121,.30) 41%, rgba(143,173,136,.16) 56%, transparent 76%);
           animation: omRibbonSweep 20s ease-in-out infinite alternate;
         }
-
         .stApp::after {
           content: "";
           position: fixed;
@@ -82,18 +92,15 @@ def apply_luminous_ui() -> None:
           50% { transform: translate3d(4%, 2%, 0) rotate(4deg) scale(1.08); }
           100% { transform: translate3d(11%, -2%, 0) rotate(10deg) scale(1.03); }
         }
-
         @keyframes sheetFloat {
           0%, 100% { transform: translate3d(0, 0, 0) rotate(var(--r)); opacity: .72; }
           50% { transform: translate3d(var(--dx), var(--dy), 0) rotate(calc(var(--r) + 2deg)); opacity: .96; }
         }
-
         @keyframes lineGlow {
           0%, 18% { opacity: .24; text-shadow: none; }
           38%, 70% { opacity: 1; text-shadow: 0 0 10px rgba(203,223,144,.62), 0 0 20px rgba(77,124,138,.42); }
           100% { opacity: .30; text-shadow: none; }
         }
-
         @keyframes haloPulse {
           0%, 100% { transform: scale(.94); opacity: .32; }
           50% { transform: scale(1.08); opacity: .72; }
@@ -114,7 +121,6 @@ def apply_luminous_ui() -> None:
           color: var(--text-main) !important;
           opacity: 1 !important;
         }
-
         .stCaptionContainer, small, .stMarkdown p,
         [data-testid="stCaptionContainer"] *, [data-testid="stFileUploader"] small {
           color: var(--text-soft) !important;
@@ -133,7 +139,6 @@ def apply_luminous_ui() -> None:
           backdrop-filter: blur(22px) saturate(155%);
           -webkit-backdrop-filter: blur(22px) saturate(155%);
         }
-
         .hero::after,
         .status-box::after,
         div[data-testid="stForm"]::after,
@@ -147,81 +152,10 @@ def apply_luminous_ui() -> None:
           pointer-events: none;
           box-shadow: inset 0 0 0 1px rgba(0,0,0,.18);
         }
-
         .hero { padding: 34px 40px; margin-bottom: 20px; }
         .hero h1 { margin: 0 0 10px 0; font-size: clamp(2rem, 4vw, 3.18rem); letter-spacing: -.055em; }
         .hero p { color: var(--text-soft) !important; font-size: 1.05rem; line-height: 1.65; max-width: 920px; }
         .status-box { padding: 15px 18px; margin: 12px 0 20px; }
-
-        .glass-table-wrap {
-          margin: 18px 0 30px;
-          border: 1px solid rgba(172,200,201,.28);
-          border-radius: 22px;
-          overflow: hidden;
-          background: linear-gradient(135deg, rgba(172,200,201,.12), rgba(27,64,121,.16), rgba(5,10,18,.72));
-          box-shadow: 0 22px 70px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.10);
-        }
-        .glass-table {
-          width: 100%;
-          border-collapse: separate;
-          border-spacing: 0;
-          color: var(--text-main);
-          font-size: .94rem;
-        }
-        .glass-table th {
-          text-align: left;
-          padding: 13px 14px;
-          background: rgba(5,10,18,.72);
-          color: rgba(245,248,251,.72);
-          font-weight: 800;
-          border-bottom: 1px solid rgba(172,200,201,.20);
-        }
-        .glass-table td {
-          padding: 13px 14px;
-          background: rgba(5,10,18,.46);
-          color: rgba(248,251,255,.92);
-          border-bottom: 1px solid rgba(172,200,201,.13);
-        }
-        .glass-table tr:last-child td { border-bottom: 0; }
-        .glass-pill {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-width: 48px;
-          padding: 4px 9px;
-          border-radius: 999px;
-          border: 1px solid rgba(203,223,144,.36);
-          background: rgba(77,124,138,.18);
-          color: #F7FFE4;
-          font-weight: 800;
-        }
-
-        .stTabs [data-baseweb="tab-list"] { gap: 12px; border-bottom: 1px solid rgba(172,200,201,.12); }
-        .stTabs [data-baseweb="tab"] {
-          border-radius: 999px !important;
-          border: 1px solid rgba(172,200,201,.22) !important;
-          background: rgba(255,255,255,.055) !important;
-          padding: 10px 18px !important;
-          color: rgba(245,248,251,.78) !important;
-        }
-        .stTabs [data-baseweb="tab"] *,
-        .stTabs [data-baseweb="tab"] p {
-          color: rgba(245,248,251,.78) !important;
-        }
-        .stTabs [aria-selected="true"],
-        .stTabs [data-baseweb="tab"][aria-selected="true"] {
-          color: #F7FFE4 !important;
-          border-color: rgba(203,223,144,.48) !important;
-          background: linear-gradient(135deg, rgba(77,124,138,.42), rgba(27,64,121,.38)) !important;
-          box-shadow: 0 0 26px rgba(77,124,138,.18) !important;
-        }
-        .stTabs [aria-selected="true"] *,
-        .stTabs [data-baseweb="tab"][aria-selected="true"] * {
-          color: #F7FFE4 !important;
-        }
-        .stTabs [data-baseweb="tab-highlight"] {
-          background: var(--om-mindaro) !important;
-        }
 
         input, textarea,
         [data-testid="stTextInput"] input,
@@ -241,7 +175,6 @@ def apply_luminous_ui() -> None:
           border-radius: 13px !important;
           box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 0 0 1px rgba(0,0,0,.18) !important;
         }
-
         input:focus, textarea:focus,
         [data-testid="stTextInput"] input:focus,
         [data-testid="stTextArea"] textarea:focus,
@@ -253,7 +186,6 @@ def apply_luminous_ui() -> None:
           box-shadow: 0 0 0 1px rgba(203,223,144,.34), 0 0 28px rgba(77,124,138,.26) !important;
           outline: none !important;
         }
-
         input::placeholder, textarea::placeholder { color: rgba(230,238,244,.48) !important; }
         [data-baseweb="select"] span,
         [data-baseweb="select"] div,
@@ -271,7 +203,6 @@ def apply_luminous_ui() -> None:
         }
         [role="option"] { color: #f8fbff !important; background: #101B24 !important; }
         [role="option"]:hover, [aria-selected="true"][role="option"] { background: rgba(77,124,138,.42) !important; }
-
         div[data-testid="stRadio"] label,
         div[data-testid="stCheckbox"] label,
         div[data-testid="stRadio"] label *,
@@ -279,15 +210,7 @@ def apply_luminous_ui() -> None:
           color: var(--text-main) !important;
           opacity: 1 !important;
         }
-        input[type="radio"], input[type="checkbox"] {
-          accent-color: var(--om-mindaro) !important;
-        }
-        [data-testid="stRadio"] [role="radiogroup"] > label > div:first-child,
-        [data-testid="stCheckbox"] label > div:first-child {
-          border-color: rgba(203,223,144,.60) !important;
-          background-color: rgba(5,10,18,.72) !important;
-        }
-
+        input[type="radio"], input[type="checkbox"] { accent-color: var(--om-mindaro) !important; }
         .stButton > button, .stDownloadButton > button,
         button[kind="primary"], button[kind="secondary"],
         [data-testid="stFileUploader"] button {
@@ -300,16 +223,13 @@ def apply_luminous_ui() -> None:
         }
         .stButton > button *, .stDownloadButton > button *,
         button[kind="primary"] *, button[kind="secondary"] *,
-        [data-testid="stFileUploader"] button * {
-          color: #f8fbff !important;
-        }
+        [data-testid="stFileUploader"] button * { color: #f8fbff !important; }
         .stButton > button:hover, .stDownloadButton > button:hover,
         button[kind="primary"]:hover, button[kind="secondary"]:hover,
         [data-testid="stFileUploader"] button:hover {
           border-color: rgba(203,223,144,.62) !important;
           box-shadow: 0 0 40px rgba(203,223,144,.16) !important;
         }
-
         div[data-testid="stAlert"] {
           color: var(--text-main) !important;
           background: rgba(27,64,121,.40) !important;
@@ -317,28 +237,12 @@ def apply_luminous_ui() -> None:
           border-radius: 16px !important;
         }
         div[data-testid="stAlert"] * { color: var(--text-main) !important; }
-
-        div[data-testid="stDataFrame"],
-        div[data-testid="stTable"],
-        div[data-testid="stDataFrameResizable"] {
+        div[data-testid="stDataFrame"], div[data-testid="stTable"], div[data-testid="stDataFrameResizable"] {
           border-radius: 18px !important;
           overflow: hidden !important;
           border: 1px solid rgba(172,200,201,.24) !important;
           box-shadow: 0 18px 50px rgba(0,0,0,.28) !important;
           background: rgba(5, 10, 18, .55) !important;
-        }
-        div[data-testid="stDataFrame"] iframe,
-        div[data-testid="stDataFrame"] canvas,
-        div[data-testid="stDataFrame"] [role="grid"],
-        div[data-testid="stTable"] table {
-          background: rgba(5, 10, 18, .74) !important;
-          color: #f8fbff !important;
-        }
-        div[data-testid="stTable"] th,
-        div[data-testid="stTable"] td {
-          background: rgba(5, 10, 18, .62) !important;
-          color: #f8fbff !important;
-          border-color: rgba(172,200,201,.18) !important;
         }
 
         .landing-stage {
@@ -352,7 +256,6 @@ def apply_luminous_ui() -> None:
           padding: 18px 24px;
           box-sizing: border-box;
         }
-
         .landing-click {
           display: block;
           position: relative;
@@ -367,20 +270,76 @@ def apply_luminous_ui() -> None:
           background: radial-gradient(circle at 50% 48%, rgba(77,124,138,.28), transparent 34%), radial-gradient(circle at 18% 54%, rgba(27,64,121,.38), transparent 35%), linear-gradient(135deg, rgba(28,40,46,.86), rgba(6,12,22,.96));
           box-shadow: 0 34px 120px rgba(0,0,0,.50), inset 0 1px 0 rgba(255,255,255,.10);
         }
-        .landing-click::before { content: ""; position: absolute; inset: -18%; background: linear-gradient(115deg, transparent 22%, rgba(77,124,138,.32) 42%, rgba(203,223,144,.14) 50%, transparent 66%), radial-gradient(ellipse at center, rgba(27,64,121,.34), transparent 58%); filter: blur(18px); animation: omRibbonSweep 18s ease-in-out infinite alternate; }
-        .landing-click::after { content: ""; position: absolute; inset: 18px; border: 1px solid rgba(255,255,255,.09); border-radius: 30px; pointer-events: none; }
+        .landing-click::before {
+          content: "";
+          position: absolute;
+          inset: -18%;
+          background: linear-gradient(115deg, transparent 22%, rgba(77,124,138,.32) 42%, rgba(203,223,144,.14) 50%, transparent 66%), radial-gradient(ellipse at center, rgba(27,64,121,.34), transparent 58%);
+          filter: blur(18px);
+          animation: omRibbonSweep 18s ease-in-out infinite alternate;
+        }
+        .landing-click::after {
+          content: "";
+          position: absolute;
+          inset: 18px;
+          border: 1px solid rgba(255,255,255,.09);
+          border-radius: 30px;
+          pointer-events: none;
+        }
+        .landing-logo-wrap {
+          position: absolute;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          z-index: 5;
+          pointer-events: none;
+        }
+        .landing-logo-halo {
+          position: absolute;
+          width: min(550px, 64vw);
+          height: min(330px, 40vw);
+          border-radius: 50%;
+          background: radial-gradient(ellipse at center, rgba(172,200,201,.28), rgba(77,124,138,.14) 38%, transparent 68%);
+          filter: blur(16px);
+          animation: haloPulse 7s ease-in-out infinite;
+        }
+        .brand-logo {
+          position: relative;
+          z-index: 2;
+          display: grid;
+          place-items: center;
+          filter: drop-shadow(0 0 24px rgba(172,200,201,.45)) drop-shadow(0 0 50px rgba(27,64,121,.50));
+        }
+        .brand-image {
+          width: min(620px, 58vw);
+          max-height: min(340px, 42vh);
+          object-fit: contain;
+          display: block;
+        }
+        .brand-logo-fallback {
+          color: #ffffff;
+          font-family: Georgia, 'Times New Roman', serif;
+          font-weight: 800;
+          font-size: clamp(2.3rem, 5.2vw, 4.6rem);
+          letter-spacing: .13em;
+        }
 
-        .landing-logo-wrap { position: absolute; inset: 0; display: grid; place-items: center; z-index: 5; pointer-events: none; }
-        .landing-logo-halo { position: absolute; width: min(550px, 64vw); height: min(330px, 40vw); border-radius: 50%; background: radial-gradient(ellipse at center, rgba(172,200,201,.28), rgba(77,124,138,.14) 38%, transparent 68%); filter: blur(16px); animation: haloPulse 7s ease-in-out infinite; }
-        .brand-logo { position: relative; z-index: 2; display: grid; place-items: center; gap: 22px; filter: drop-shadow(0 0 24px rgba(172,200,201,.45)) drop-shadow(0 0 50px rgba(27,64,121,.50)); }
-        .brand-mark-css { width: min(310px, 38vw); height: min(150px, 18vw); min-height: 96px; display: flex; align-items: end; justify-content: center; gap: 8px; }
-        .brand-mark-css span { display: block; background: #ffffff; box-shadow: 0 0 16px rgba(255,255,255,.18); }
-        .mark-left { width: 118px; height: 118px; border-radius: 80px 0 0 80px; }
-        .mark-mid { width: 70px; height: 118px; border-radius: 70px 70px 0 0; }
-        .mark-right { width: 118px; height: 118px; border-radius: 78px 0 0 0; }
-        .brand-word { font-size: clamp(2.3rem, 5.2vw, 4.6rem); line-height: 1; letter-spacing: .13em; font-weight: 800; color: #ffffff; font-family: Georgia, 'Times New Roman', serif; }
-
-        .price-sheet { position: absolute; z-index: 2; width: 235px; min-height: 285px; padding: 24px 22px; border: 1px solid rgba(172,200,201,.26); border-radius: 8px; background: linear-gradient(160deg, rgba(27,64,121,.34), rgba(28,40,46,.72)); box-shadow: 0 20px 50px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.10), 0 0 28px rgba(77,124,138,.12); backdrop-filter: blur(8px); animation: sheetFloat 9s ease-in-out infinite; --dx: 12px; --dy: -16px; --r: -7deg; }
+        .price-sheet {
+          position: absolute;
+          z-index: 2;
+          width: 235px;
+          min-height: 285px;
+          padding: 24px 22px;
+          border: 1px solid rgba(172,200,201,.26);
+          border-radius: 8px;
+          background: linear-gradient(160deg, rgba(27,64,121,.34), rgba(28,40,46,.72));
+          box-shadow: 0 20px 50px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.10), 0 0 28px rgba(77,124,138,.12);
+          backdrop-filter: blur(8px);
+          animation: sheetFloat 9s ease-in-out infinite;
+          --dx: 12px;
+          --dy: -16px;
+          --r: -7deg;
+        }
         .price-sheet::after { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(255,255,255,.07); border-radius: 5px; pointer-events: none; }
         .price-title { text-align: center; font-weight: 900; letter-spacing: .12em; font-size: .78rem; color: #f7fbff; margin-bottom: 16px; text-transform: uppercase; }
         .line { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(172,200,201,.18); color: rgba(245,248,251,.86); font-size: .82rem; animation: lineGlow 6.4s ease-in-out infinite; animation-delay: var(--delay); }
@@ -398,7 +357,7 @@ def apply_luminous_ui() -> None:
           .price-sheet { width: 190px; min-height: 235px; padding: 18px; opacity: .68; }
           .s2, .s5, .s7 { display: none; }
           .block-container { padding-left: 1rem; padding-right: 1rem; }
-          .brand-mark-css { width: min(240px, 48vw); }
+          .brand-image { width: min(520px, 72vw); }
         }
         </style>
         """,
@@ -469,16 +428,16 @@ def render_landing_page() -> None:
         _landing_sheet("s6", services[2:]),
         _landing_sheet("s7", services[:5]),
     ])
-    html = """
+    html = f"""
     <div class="landing-stage">
       <a class="landing-click" href="?view=app" aria-label="Open pricing agreement generator">
-        __SHEETS__
+        {sheets}
         <div class="landing-logo-wrap">
           <div class="landing-logo-halo"></div>
-          __LOGO__
+          {logo_markup()}
         </div>
       </a>
     </div>
     """
-    st.markdown(html.replace("__SHEETS__", sheets).replace("__LOGO__", logo_markup()), unsafe_allow_html=True)
+    st.markdown(html, unsafe_allow_html=True)
     st.stop()
