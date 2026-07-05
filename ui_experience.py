@@ -1,13 +1,24 @@
 from __future__ import annotations
 
+import base64
 from pathlib import Path
 from typing import List, Tuple
 
 import streamlit as st
+from streamlit.components.v1 import html as components_html
 
 
 ASSET_DIR = Path(__file__).parent / "assets"
 LOGO_PATH = ASSET_DIR / "occu-med-logo.png"
+
+
+def _asset_data_uri(path: Path) -> str:
+    if not path.exists():
+        return ""
+    suffix = path.suffix.lower().lstrip(".") or "png"
+    mime = "image/svg+xml" if suffix == "svg" else f"image/{suffix}"
+    encoded = base64.b64encode(path.read_bytes()).decode("utf-8")
+    return f"data:{mime};base64,{encoded}"
 
 
 def apply_luminous_ui() -> None:
@@ -27,7 +38,6 @@ def apply_luminous_ui() -> None:
           --text-main: rgba(248, 251, 255, .96);
           --text-soft: rgba(228, 238, 244, .78);
         }
-
         html, body, .stApp { min-height: 100%; }
         .stApp {
           color: var(--text-main);
@@ -61,31 +71,15 @@ def apply_luminous_ui() -> None:
           background-image: linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
           background-size: 48px 48px;
         }
-
         @keyframes omRibbonSweep {
           0% { transform: translate3d(-8%, -4%, 0) rotate(-7deg) scale(1.02); }
           50% { transform: translate3d(4%, 2%, 0) rotate(4deg) scale(1.08); }
           100% { transform: translate3d(11%, -2%, 0) rotate(10deg) scale(1.03); }
         }
-        @keyframes sheetFloat {
-          0%, 100% { transform: translate3d(0, 0, 0) rotate(var(--r)); opacity: .72; }
-          50% { transform: translate3d(var(--dx), var(--dy), 0) rotate(calc(var(--r) + 2deg)); opacity: .96; }
-        }
-        @keyframes lineGlow {
-          0%, 18% { opacity: .24; text-shadow: none; }
-          38%, 70% { opacity: 1; text-shadow: 0 0 10px rgba(203,223,144,.62), 0 0 20px rgba(77,124,138,.42); }
-          100% { opacity: .30; text-shadow: none; }
-        }
-        @keyframes haloPulse {
-          0%, 100% { transform: translate(-50%, -50%) scale(.94); opacity: .32; }
-          50% { transform: translate(-50%, -50%) scale(1.08); opacity: .72; }
-        }
-
         [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stStatusWidget"] { background: transparent !important; }
         [data-testid="stToolbar"], [data-testid="stDecoration"], [data-testid="stStatusWidget"] { visibility: hidden !important; height: 0 !important; }
         footer { visibility: hidden !important; }
         .block-container { position: relative; z-index: 1; max-width: 1180px; padding-top: 2.25rem; }
-
         h1, h2, h3, h4, h5, h6,
         p, label, span, div[data-testid="stMarkdownContainer"],
         [data-testid="stWidgetLabel"], [data-testid="stWidgetLabel"] p,
@@ -100,7 +94,6 @@ def apply_luminous_ui() -> None:
         [data-testid="stCaptionContainer"] *, [data-testid="stFileUploader"] small {
           color: var(--text-soft) !important;
         }
-
         .hero,
         .status-box,
         div[data-testid="stForm"],
@@ -131,7 +124,6 @@ def apply_luminous_ui() -> None:
         .hero h1 { margin: 0 0 10px 0; font-size: clamp(2rem, 4vw, 3.18rem); letter-spacing: -.055em; }
         .hero p { color: var(--text-soft) !important; font-size: 1.05rem; line-height: 1.65; max-width: 920px; }
         .status-box { padding: 15px 18px; margin: 12px 0 20px; }
-
         input, textarea,
         [data-testid="stTextInput"] input,
         [data-testid="stTextArea"] textarea,
@@ -234,138 +226,8 @@ def _landing_sheet(sheet_class: str, rows: List[Tuple[str, str]]) -> str:
 
 
 def render_landing_page() -> None:
-    st.markdown(
-        """
-        <style>
-        html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
-          height: 100vh !important;
-          max-height: 100vh !important;
-          overflow: hidden !important;
-        }
-        .block-container {
-          max-width: none !important;
-          padding: 0 !important;
-        }
-        .landing-stage {
-          height: 100vh !important;
-          min-height: 100vh !important;
-          width: 100vw;
-          display: grid;
-          place-items: center;
-          position: relative;
-          overflow: hidden;
-          margin: 0 calc(50% - 50vw) !important;
-          padding: 12px 18px !important;
-          box-sizing: border-box;
-        }
-        .landing-click {
-          display: block;
-          position: relative;
-          width: calc(100vw - 36px) !important;
-          height: calc(100vh - 24px) !important;
-          min-height: 0 !important;
-          text-decoration: none !important;
-          color: inherit !important;
-          border-radius: 42px;
-          overflow: hidden;
-          border: 1px solid rgba(172,200,201,.18);
-          background: radial-gradient(circle at 50% 48%, rgba(77,124,138,.28), transparent 34%), radial-gradient(circle at 18% 54%, rgba(27,64,121,.38), transparent 35%), linear-gradient(135deg, rgba(28,40,46,.86), rgba(6,12,22,.96));
-          box-shadow: 0 34px 120px rgba(0,0,0,.50), inset 0 1px 0 rgba(255,255,255,.10);
-        }
-        .landing-click::before {
-          content: "";
-          position: absolute;
-          inset: -18%;
-          background: linear-gradient(115deg, transparent 22%, rgba(77,124,138,.32) 42%, rgba(203,223,144,.14) 50%, transparent 66%), radial-gradient(ellipse at center, rgba(27,64,121,.34), transparent 58%);
-          filter: blur(18px);
-          animation: omRibbonSweep 18s ease-in-out infinite alternate;
-        }
-        .landing-click::after {
-          content: "";
-          position: absolute;
-          inset: 18px;
-          border: 1px solid rgba(255,255,255,.09);
-          border-radius: 30px;
-          pointer-events: none;
-        }
-        .landing-logo-halo-fixed {
-          position: fixed;
-          left: 50%;
-          top: 50%;
-          transform: translate(-50%, -50%);
-          z-index: 7;
-          width: min(550px, 64vw);
-          height: min(330px, 40vw);
-          border-radius: 50%;
-          background: radial-gradient(ellipse at center, rgba(172,200,201,.28), rgba(77,124,138,.14) 38%, transparent 68%);
-          filter: blur(16px);
-          animation: haloPulse 7s ease-in-out infinite;
-          pointer-events: none;
-        }
-        .landing-logo-fallback {
-          position: fixed;
-          left: 50%;
-          top: 50%;
-          transform: translate(-50%, -50%);
-          z-index: 8;
-          color: #fff;
-          font-family: Georgia, 'Times New Roman', serif;
-          letter-spacing: .13em;
-          font-size: clamp(2.3rem, 5.2vw, 4.6rem);
-          font-weight: 800;
-          pointer-events: none;
-        }
-        .landing-logo-image [data-testid="stImage"] {
-          position: fixed !important;
-          left: 50% !important;
-          top: 50% !important;
-          transform: translate(-50%, -50%) !important;
-          z-index: 8 !important;
-          width: min(620px, 58vw) !important;
-          pointer-events: none !important;
-          filter: drop-shadow(0 0 24px rgba(172,200,201,.45)) drop-shadow(0 0 50px rgba(27,64,121,.50));
-        }
-        .landing-logo-image [data-testid="stImage"] img {
-          width: 100% !important;
-          height: auto !important;
-          object-fit: contain !important;
-        }
-        .price-sheet {
-          position: absolute;
-          z-index: 2;
-          width: 235px;
-          min-height: 285px;
-          padding: 24px 22px;
-          border: 1px solid rgba(172,200,201,.26);
-          border-radius: 8px;
-          background: linear-gradient(160deg, rgba(27,64,121,.34), rgba(28,40,46,.72));
-          box-shadow: 0 20px 50px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.10), 0 0 28px rgba(77,124,138,.12);
-          backdrop-filter: blur(8px);
-          animation: sheetFloat 9s ease-in-out infinite;
-          --dx: 12px;
-          --dy: -16px;
-          --r: -7deg;
-        }
-        .price-sheet::after { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(255,255,255,.07); border-radius: 5px; pointer-events: none; }
-        .price-title { text-align: center; font-weight: 900; letter-spacing: .12em; font-size: .78rem; color: #f7fbff; margin-bottom: 16px; text-transform: uppercase; }
-        .line { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(172,200,201,.18); color: rgba(245,248,251,.86); font-size: .82rem; animation: lineGlow 6.4s ease-in-out infinite; animation-delay: var(--delay); }
-        .line span:last-child { color: #f2ffe0; }
-        .s1 { left: 3%; top: 16%; --r: -7deg; --dx: 16px; --dy: -18px; }
-        .s2 { left: 29%; top: 6%; transform: scale(.72); --r: -4deg; --dx: -10px; --dy: 18px; animation-duration: 11s; }
-        .s3 { right: 7%; top: 12%; --r: 8deg; --dx: -18px; --dy: -12px; animation-duration: 10s; }
-        .s4 { left: 21%; bottom: 9%; transform: scale(.74); --r: -6deg; --dx: 18px; --dy: 15px; animation-duration: 12s; }
-        .s5 { right: 26%; bottom: 11%; transform: scale(.78); --r: 7deg; --dx: -10px; --dy: 12px; animation-duration: 9.5s; }
-        .s6 { right: 12%; bottom: 26%; transform: scale(.82); --r: 11deg; --dx: 12px; --dy: -12px; animation-duration: 13s; }
-        .s7 { left: 44%; top: 2%; transform: scale(.66); --r: -5deg; --dx: 8px; --dy: 20px; animation-duration: 14s; opacity: .58; }
-        @media (max-width: 820px) {
-          .price-sheet { width: 190px; min-height: 235px; padding: 18px; opacity: .68; }
-          .s2, .s5, .s7 { display: none; }
-          .landing-logo-image [data-testid="stImage"] { width: min(520px, 72vw) !important; }
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    logo_src = _asset_data_uri(LOGO_PATH)
+    logo_html = f'<img class="brand-image" src="{logo_src}" alt="Occu-Med logo" />' if logo_src else '<div class="brand-fallback">OCCU-MED</div>'
     services = [
         ("General Physical Exam", "$125.00"),
         ("Audiogram", "$45.00"),
@@ -393,21 +255,210 @@ def render_landing_page() -> None:
         _landing_sheet("s6", services[2:]),
         _landing_sheet("s7", services[:5]),
     ])
-    st.markdown(
-        f"""
-        <div class="landing-stage">
-          <a class="landing-click" href="?view=app" aria-label="Open pricing agreement generator">
-            {sheets}
-          </a>
+    landing_html = """
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <style>
+        html, body {
+          margin: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          background: #050913;
+          font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        .stage {
+          position: relative;
+          width: 100vw;
+          height: 100vh;
+          overflow: hidden;
+          display: grid;
+          place-items: center;
+          background:
+            radial-gradient(circle at 50% 50%, rgba(77,124,138,.28), transparent 34%),
+            radial-gradient(circle at 18% 54%, rgba(27,64,121,.38), transparent 35%),
+            linear-gradient(135deg, rgba(28,40,46,.86), rgba(6,12,22,.98));
+        }
+        .stage::before {
+          content: "";
+          position: absolute;
+          inset: -18%;
+          background:
+            linear-gradient(115deg, transparent 22%, rgba(77,124,138,.32) 42%, rgba(203,223,144,.14) 50%, transparent 66%),
+            radial-gradient(ellipse at center, rgba(27,64,121,.34), transparent 58%);
+          filter: blur(18px);
+          animation: ribbon 18s ease-in-out infinite alternate;
+        }
+        .frame {
+          position: absolute;
+          inset: 18px;
+          border: 1px solid rgba(172,200,201,.18);
+          border-radius: 42px;
+          box-shadow: 0 34px 120px rgba(0,0,0,.50), inset 0 1px 0 rgba(255,255,255,.10);
+          pointer-events: none;
+        }
+        .frame::after {
+          content: "";
+          position: absolute;
+          inset: 18px;
+          border: 1px solid rgba(255,255,255,.09);
+          border-radius: 30px;
+        }
+        .open-link {
+          position: absolute;
+          inset: 0;
+          z-index: 20;
+          cursor: pointer;
+        }
+        .logo-wrap {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 10;
+          display: grid;
+          place-items: center;
+          pointer-events: none;
+        }
+        .halo {
+          position: absolute;
+          width: min(560px, 64vw);
+          height: min(330px, 40vw);
+          border-radius: 50%;
+          background: radial-gradient(ellipse at center, rgba(172,200,201,.28), rgba(77,124,138,.14) 38%, transparent 68%);
+          filter: blur(16px);
+          animation: halo 7s ease-in-out infinite;
+        }
+        .brand-image {
+          position: relative;
+          width: min(620px, 58vw);
+          max-height: min(340px, 42vh);
+          object-fit: contain;
+          display: block;
+          filter: drop-shadow(0 0 24px rgba(172,200,201,.45)) drop-shadow(0 0 50px rgba(27,64,121,.50));
+        }
+        .brand-fallback {
+          color: white;
+          font-family: Georgia, 'Times New Roman', serif;
+          font-weight: 800;
+          font-size: clamp(2.3rem, 5.2vw, 4.6rem);
+          letter-spacing: .13em;
+          filter: drop-shadow(0 0 24px rgba(172,200,201,.45));
+        }
+        .price-sheet {
+          position: absolute;
+          z-index: 2;
+          width: 235px;
+          min-height: 285px;
+          padding: 24px 22px;
+          border: 1px solid rgba(172,200,201,.26);
+          border-radius: 8px;
+          background: linear-gradient(160deg, rgba(27,64,121,.34), rgba(28,40,46,.72));
+          box-shadow: 0 20px 50px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.10), 0 0 28px rgba(77,124,138,.12);
+          backdrop-filter: blur(8px);
+          animation: sheetFloat 9s ease-in-out infinite;
+          --dx: 12px;
+          --dy: -16px;
+          --r: -7deg;
+        }
+        .price-sheet::after {
+          content: "";
+          position: absolute;
+          inset: 8px;
+          border: 1px solid rgba(255,255,255,.07);
+          border-radius: 5px;
+          pointer-events: none;
+        }
+        .price-title {
+          text-align: center;
+          font-weight: 900;
+          letter-spacing: .12em;
+          font-size: .78rem;
+          color: #f7fbff;
+          margin-bottom: 16px;
+          text-transform: uppercase;
+        }
+        .line {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 14px;
+          align-items: center;
+          padding: 8px 0;
+          border-bottom: 1px solid rgba(172,200,201,.18);
+          color: rgba(245,248,251,.86);
+          font-size: .82rem;
+          animation: lineGlow 6.4s ease-in-out infinite;
+          animation-delay: var(--delay);
+        }
+        .line span:last-child { color: #f2ffe0; }
+        .s1 { left: 3%; top: 16%; --r: -7deg; --dx: 16px; --dy: -18px; }
+        .s2 { left: 29%; top: 6%; transform: scale(.72); --r: -4deg; --dx: -10px; --dy: 18px; animation-duration: 11s; }
+        .s3 { right: 7%; top: 12%; --r: 8deg; --dx: -18px; --dy: -12px; animation-duration: 10s; }
+        .s4 { left: 21%; bottom: 9%; transform: scale(.74); --r: -6deg; --dx: 18px; --dy: 15px; animation-duration: 12s; }
+        .s5 { right: 26%; bottom: 11%; transform: scale(.78); --r: 7deg; --dx: -10px; --dy: 12px; animation-duration: 9.5s; }
+        .s6 { right: 12%; bottom: 26%; transform: scale(.82); --r: 11deg; --dx: 12px; --dy: -12px; animation-duration: 13s; }
+        .s7 { left: 44%; top: 2%; transform: scale(.66); --r: -5deg; --dx: 8px; --dy: 20px; animation-duration: 14s; opacity: .58; }
+        @keyframes ribbon {
+          0% { transform: translate3d(-8%, -4%, 0) rotate(-7deg) scale(1.02); }
+          50% { transform: translate3d(4%, 2%, 0) rotate(4deg) scale(1.08); }
+          100% { transform: translate3d(11%, -2%, 0) rotate(10deg) scale(1.03); }
+        }
+        @keyframes halo {
+          0%, 100% { transform: scale(.94); opacity: .32; }
+          50% { transform: scale(1.08); opacity: .72; }
+        }
+        @keyframes sheetFloat {
+          0%, 100% { transform: translate3d(0, 0, 0) rotate(var(--r)); opacity: .72; }
+          50% { transform: translate3d(var(--dx), var(--dy), 0) rotate(calc(var(--r) + 2deg)); opacity: .96; }
+        }
+        @keyframes lineGlow {
+          0%, 18% { opacity: .24; text-shadow: none; }
+          38%, 70% { opacity: 1; text-shadow: 0 0 10px rgba(203,223,144,.62), 0 0 20px rgba(77,124,138,.42); }
+          100% { opacity: .30; text-shadow: none; }
+        }
+        @media (max-width: 820px) {
+          .price-sheet { width: 190px; min-height: 235px; padding: 18px; opacity: .68; }
+          .s2, .s5, .s7 { display: none; }
+          .brand-image { width: min(520px, 72vw); }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="stage">
+        <div class="frame"></div>
+        __SHEETS__
+        <div class="logo-wrap">
+          <div class="halo"></div>
+          __LOGO__
         </div>
-        <div class="landing-logo-halo-fixed"></div>
+        <a class="open-link" href="?view=app" target="_parent" aria-label="Open pricing agreement generator"></a>
+      </div>
+    </body>
+    </html>
+    """.replace("__SHEETS__", sheets).replace("__LOGO__", logo_html)
+
+    st.markdown(
+        """
+        <style>
+        html, body, .stApp, [data-testid="stAppViewContainer"], section.main {
+          height: 100vh !important;
+          max-height: 100vh !important;
+          overflow: hidden !important;
+        }
+        .block-container {
+          max-width: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        iframe {
+          display: block !important;
+        }
+        </style>
         """,
         unsafe_allow_html=True,
     )
-    if LOGO_PATH.exists():
-        st.markdown('<div class="landing-logo-image">', unsafe_allow_html=True)
-        st.image(str(LOGO_PATH), width=620)
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        st.markdown('<div class="landing-logo-fallback">OCCU-MED</div>', unsafe_allow_html=True)
+    components_html(landing_html, height=900, scrolling=False)
     st.stop()
