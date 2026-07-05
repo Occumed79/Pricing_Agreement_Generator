@@ -456,9 +456,19 @@ def render_landing_page() -> None:
         iframe {
           display: block !important;
         }
+        .parent-click-target {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 2147483647 !important;
+          display: block !important;
+          background: rgba(0,0,0,0) !important;
+          cursor: pointer !important;
+          text-decoration: none !important;
+        }
         </style>
         """,
         unsafe_allow_html=True,
     )
     components_html(landing_html, height=900, scrolling=False)
+    st.markdown('<a class="parent-click-target" href="?view=app" target="_self" aria-label="Open pricing agreement generator"></a>', unsafe_allow_html=True)
     st.stop()
