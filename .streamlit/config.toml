@@ -4,3 +4,11 @@ gatherUsageStats = false
 [server]
 headless = true
 maxUploadSize = 200
+
+[theme]
+base = "dark"
+primaryColor = "#CBDF90"
+backgroundColor = "#050913"
+secondaryBackgroundColor = "#102432"
+textColor = "#F8FBFF"
+font = "sans serif"
