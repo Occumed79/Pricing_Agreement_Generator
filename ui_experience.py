@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 from pathlib import Path
 from typing import List, Tuple
 
@@ -9,30 +8,6 @@ import streamlit as st
 
 ASSET_DIR = Path(__file__).parent / "assets"
 LOGO_PATH = ASSET_DIR / "occu-med-logo.png"
-
-
-def _asset_data_uri(path: Path) -> str:
-    if not path.exists():
-        return ""
-    suffix = path.suffix.lower().lstrip(".") or "png"
-    mime = "image/svg+xml" if suffix == "svg" else f"image/{suffix}"
-    encoded = base64.b64encode(path.read_bytes()).decode("utf-8")
-    return f"data:{mime};base64,{encoded}"
-
-
-def logo_markup() -> str:
-    logo_src = _asset_data_uri(LOGO_PATH)
-    if logo_src:
-        return f"""
-        <div class="brand-logo" aria-label="Occu-Med logo">
-          <img class="brand-image" src="{logo_src}" alt="Occu-Med logo" />
-        </div>
-        """
-    return """
-    <div class="brand-logo brand-logo-fallback" aria-label="Occu-Med logo">
-      OCCU-MED
-    </div>
-    """
 
 
 def apply_luminous_ui() -> None:
@@ -102,8 +77,8 @@ def apply_luminous_ui() -> None:
           100% { opacity: .30; text-shadow: none; }
         }
         @keyframes haloPulse {
-          0%, 100% { transform: scale(.94); opacity: .32; }
-          50% { transform: scale(1.08); opacity: .72; }
+          0%, 100% { transform: translate(-50%, -50%) scale(.94); opacity: .32; }
+          50% { transform: translate(-50%, -50%) scale(1.08); opacity: .72; }
         }
 
         [data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stStatusWidget"] { background: transparent !important; }
@@ -244,121 +219,6 @@ def apply_luminous_ui() -> None:
           box-shadow: 0 18px 50px rgba(0,0,0,.28) !important;
           background: rgba(5, 10, 18, .55) !important;
         }
-
-        .landing-stage {
-          min-height: calc(100vh - 8px);
-          width: 100vw;
-          display: grid;
-          place-items: center;
-          position: relative;
-          overflow: hidden;
-          margin: -1.75rem calc(50% - 50vw) 0;
-          padding: 18px 24px;
-          box-sizing: border-box;
-        }
-        .landing-click {
-          display: block;
-          position: relative;
-          width: min(1500px, calc(100vw - 48px));
-          height: min(900px, calc(100vh - 54px));
-          min-height: 760px;
-          text-decoration: none !important;
-          color: inherit !important;
-          border-radius: 42px;
-          overflow: hidden;
-          border: 1px solid rgba(172,200,201,.18);
-          background: radial-gradient(circle at 50% 48%, rgba(77,124,138,.28), transparent 34%), radial-gradient(circle at 18% 54%, rgba(27,64,121,.38), transparent 35%), linear-gradient(135deg, rgba(28,40,46,.86), rgba(6,12,22,.96));
-          box-shadow: 0 34px 120px rgba(0,0,0,.50), inset 0 1px 0 rgba(255,255,255,.10);
-        }
-        .landing-click::before {
-          content: "";
-          position: absolute;
-          inset: -18%;
-          background: linear-gradient(115deg, transparent 22%, rgba(77,124,138,.32) 42%, rgba(203,223,144,.14) 50%, transparent 66%), radial-gradient(ellipse at center, rgba(27,64,121,.34), transparent 58%);
-          filter: blur(18px);
-          animation: omRibbonSweep 18s ease-in-out infinite alternate;
-        }
-        .landing-click::after {
-          content: "";
-          position: absolute;
-          inset: 18px;
-          border: 1px solid rgba(255,255,255,.09);
-          border-radius: 30px;
-          pointer-events: none;
-        }
-        .landing-logo-wrap {
-          position: absolute;
-          inset: 0;
-          display: grid;
-          place-items: center;
-          z-index: 5;
-          pointer-events: none;
-        }
-        .landing-logo-halo {
-          position: absolute;
-          width: min(550px, 64vw);
-          height: min(330px, 40vw);
-          border-radius: 50%;
-          background: radial-gradient(ellipse at center, rgba(172,200,201,.28), rgba(77,124,138,.14) 38%, transparent 68%);
-          filter: blur(16px);
-          animation: haloPulse 7s ease-in-out infinite;
-        }
-        .brand-logo {
-          position: relative;
-          z-index: 2;
-          display: grid;
-          place-items: center;
-          filter: drop-shadow(0 0 24px rgba(172,200,201,.45)) drop-shadow(0 0 50px rgba(27,64,121,.50));
-        }
-        .brand-image {
-          width: min(620px, 58vw);
-          max-height: min(340px, 42vh);
-          object-fit: contain;
-          display: block;
-        }
-        .brand-logo-fallback {
-          color: #ffffff;
-          font-family: Georgia, 'Times New Roman', serif;
-          font-weight: 800;
-          font-size: clamp(2.3rem, 5.2vw, 4.6rem);
-          letter-spacing: .13em;
-        }
-
-        .price-sheet {
-          position: absolute;
-          z-index: 2;
-          width: 235px;
-          min-height: 285px;
-          padding: 24px 22px;
-          border: 1px solid rgba(172,200,201,.26);
-          border-radius: 8px;
-          background: linear-gradient(160deg, rgba(27,64,121,.34), rgba(28,40,46,.72));
-          box-shadow: 0 20px 50px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.10), 0 0 28px rgba(77,124,138,.12);
-          backdrop-filter: blur(8px);
-          animation: sheetFloat 9s ease-in-out infinite;
-          --dx: 12px;
-          --dy: -16px;
-          --r: -7deg;
-        }
-        .price-sheet::after { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(255,255,255,.07); border-radius: 5px; pointer-events: none; }
-        .price-title { text-align: center; font-weight: 900; letter-spacing: .12em; font-size: .78rem; color: #f7fbff; margin-bottom: 16px; text-transform: uppercase; }
-        .line { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(172,200,201,.18); color: rgba(245,248,251,.86); font-size: .82rem; animation: lineGlow 6.4s ease-in-out infinite; animation-delay: var(--delay); }
-        .line span:last-child { color: #f2ffe0; }
-        .s1 { left: 3%; top: 16%; --r: -7deg; --dx: 16px; --dy: -18px; }
-        .s2 { left: 29%; top: 6%; transform: scale(.72); --r: -4deg; --dx: -10px; --dy: 18px; animation-duration: 11s; }
-        .s3 { right: 7%; top: 12%; --r: 8deg; --dx: -18px; --dy: -12px; animation-duration: 10s; }
-        .s4 { left: 21%; bottom: 9%; transform: scale(.74); --r: -6deg; --dx: 18px; --dy: 15px; animation-duration: 12s; }
-        .s5 { right: 26%; bottom: 11%; transform: scale(.78); --r: 7deg; --dx: -10px; --dy: 12px; animation-duration: 9.5s; }
-        .s6 { right: 12%; bottom: 26%; transform: scale(.82); --r: 11deg; --dx: 12px; --dy: -12px; animation-duration: 13s; }
-        .s7 { left: 44%; top: 2%; transform: scale(.66); --r: -5deg; --dx: 8px; --dy: 20px; animation-duration: 14s; opacity: .58; }
-
-        @media (max-width: 820px) {
-          .landing-click { width: calc(100vw - 24px); height: calc(100vh - 48px); min-height: 680px; }
-          .price-sheet { width: 190px; min-height: 235px; padding: 18px; opacity: .68; }
-          .s2, .s5, .s7 { display: none; }
-          .block-container { padding-left: 1rem; padding-right: 1rem; }
-          .brand-image { width: min(520px, 72vw); }
-        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -389,13 +249,118 @@ def render_landing_page() -> None:
         .landing-stage {
           height: 100vh !important;
           min-height: 100vh !important;
+          width: 100vw;
+          display: grid;
+          place-items: center;
+          position: relative;
+          overflow: hidden;
           margin: 0 calc(50% - 50vw) !important;
           padding: 12px 18px !important;
+          box-sizing: border-box;
         }
         .landing-click {
+          display: block;
+          position: relative;
           width: calc(100vw - 36px) !important;
           height: calc(100vh - 24px) !important;
           min-height: 0 !important;
+          text-decoration: none !important;
+          color: inherit !important;
+          border-radius: 42px;
+          overflow: hidden;
+          border: 1px solid rgba(172,200,201,.18);
+          background: radial-gradient(circle at 50% 48%, rgba(77,124,138,.28), transparent 34%), radial-gradient(circle at 18% 54%, rgba(27,64,121,.38), transparent 35%), linear-gradient(135deg, rgba(28,40,46,.86), rgba(6,12,22,.96));
+          box-shadow: 0 34px 120px rgba(0,0,0,.50), inset 0 1px 0 rgba(255,255,255,.10);
+        }
+        .landing-click::before {
+          content: "";
+          position: absolute;
+          inset: -18%;
+          background: linear-gradient(115deg, transparent 22%, rgba(77,124,138,.32) 42%, rgba(203,223,144,.14) 50%, transparent 66%), radial-gradient(ellipse at center, rgba(27,64,121,.34), transparent 58%);
+          filter: blur(18px);
+          animation: omRibbonSweep 18s ease-in-out infinite alternate;
+        }
+        .landing-click::after {
+          content: "";
+          position: absolute;
+          inset: 18px;
+          border: 1px solid rgba(255,255,255,.09);
+          border-radius: 30px;
+          pointer-events: none;
+        }
+        .landing-logo-halo-fixed {
+          position: fixed;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 7;
+          width: min(550px, 64vw);
+          height: min(330px, 40vw);
+          border-radius: 50%;
+          background: radial-gradient(ellipse at center, rgba(172,200,201,.28), rgba(77,124,138,.14) 38%, transparent 68%);
+          filter: blur(16px);
+          animation: haloPulse 7s ease-in-out infinite;
+          pointer-events: none;
+        }
+        .landing-logo-fallback {
+          position: fixed;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 8;
+          color: #fff;
+          font-family: Georgia, 'Times New Roman', serif;
+          letter-spacing: .13em;
+          font-size: clamp(2.3rem, 5.2vw, 4.6rem);
+          font-weight: 800;
+          pointer-events: none;
+        }
+        .landing-logo-image [data-testid="stImage"] {
+          position: fixed !important;
+          left: 50% !important;
+          top: 50% !important;
+          transform: translate(-50%, -50%) !important;
+          z-index: 8 !important;
+          width: min(620px, 58vw) !important;
+          pointer-events: none !important;
+          filter: drop-shadow(0 0 24px rgba(172,200,201,.45)) drop-shadow(0 0 50px rgba(27,64,121,.50));
+        }
+        .landing-logo-image [data-testid="stImage"] img {
+          width: 100% !important;
+          height: auto !important;
+          object-fit: contain !important;
+        }
+        .price-sheet {
+          position: absolute;
+          z-index: 2;
+          width: 235px;
+          min-height: 285px;
+          padding: 24px 22px;
+          border: 1px solid rgba(172,200,201,.26);
+          border-radius: 8px;
+          background: linear-gradient(160deg, rgba(27,64,121,.34), rgba(28,40,46,.72));
+          box-shadow: 0 20px 50px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.10), 0 0 28px rgba(77,124,138,.12);
+          backdrop-filter: blur(8px);
+          animation: sheetFloat 9s ease-in-out infinite;
+          --dx: 12px;
+          --dy: -16px;
+          --r: -7deg;
+        }
+        .price-sheet::after { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(255,255,255,.07); border-radius: 5px; pointer-events: none; }
+        .price-title { text-align: center; font-weight: 900; letter-spacing: .12em; font-size: .78rem; color: #f7fbff; margin-bottom: 16px; text-transform: uppercase; }
+        .line { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(172,200,201,.18); color: rgba(245,248,251,.86); font-size: .82rem; animation: lineGlow 6.4s ease-in-out infinite; animation-delay: var(--delay); }
+        .line span:last-child { color: #f2ffe0; }
+        .s1 { left: 3%; top: 16%; --r: -7deg; --dx: 16px; --dy: -18px; }
+        .s2 { left: 29%; top: 6%; transform: scale(.72); --r: -4deg; --dx: -10px; --dy: 18px; animation-duration: 11s; }
+        .s3 { right: 7%; top: 12%; --r: 8deg; --dx: -18px; --dy: -12px; animation-duration: 10s; }
+        .s4 { left: 21%; bottom: 9%; transform: scale(.74); --r: -6deg; --dx: 18px; --dy: 15px; animation-duration: 12s; }
+        .s5 { right: 26%; bottom: 11%; transform: scale(.78); --r: 7deg; --dx: -10px; --dy: 12px; animation-duration: 9.5s; }
+        .s6 { right: 12%; bottom: 26%; transform: scale(.82); --r: 11deg; --dx: 12px; --dy: -12px; animation-duration: 13s; }
+        .s7 { left: 44%; top: 2%; transform: scale(.66); --r: -5deg; --dx: 8px; --dy: 20px; animation-duration: 14s; opacity: .58; }
+        @media (max-width: 820px) {
+          .price-sheet { width: 190px; min-height: 235px; padding: 18px; opacity: .68; }
+          .s2, .s5, .s7 { display: none; }
+          .landing-logo-image [data-testid="stImage"] { width: min(520px, 72vw) !important; }
         }
         </style>
         """,
@@ -428,16 +393,21 @@ def render_landing_page() -> None:
         _landing_sheet("s6", services[2:]),
         _landing_sheet("s7", services[:5]),
     ])
-    html = f"""
-    <div class="landing-stage">
-      <a class="landing-click" href="?view=app" aria-label="Open pricing agreement generator">
-        {sheets}
-        <div class="landing-logo-wrap">
-          <div class="landing-logo-halo"></div>
-          {logo_markup()}
+    st.markdown(
+        f"""
+        <div class="landing-stage">
+          <a class="landing-click" href="?view=app" aria-label="Open pricing agreement generator">
+            {sheets}
+          </a>
         </div>
-      </a>
-    </div>
-    """
-    st.markdown(html, unsafe_allow_html=True)
+        <div class="landing-logo-halo-fixed"></div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if LOGO_PATH.exists():
+        st.markdown('<div class="landing-logo-image">', unsafe_allow_html=True)
+        st.image(str(LOGO_PATH), width=620)
+        st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="landing-logo-fallback">OCCU-MED</div>', unsafe_allow_html=True)
     st.stop()
