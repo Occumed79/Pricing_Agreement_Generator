@@ -10,3 +10,16 @@ services:
         value: 3.12.8
       - key: DATABASE_URL
         sync: false
+
+  - type: web
+    name: pricing-agreement-generator-api
+    runtime: python
+    plan: free
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && python -m py_compile app.py app_entry.py api.py ui_experience.py
+    startCommand: uvicorn api:app --host 0.0.0.0 --port=$PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DATABASE_URL
+        sync: false
