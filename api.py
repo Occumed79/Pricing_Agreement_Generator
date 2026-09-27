@@ -13,12 +13,12 @@ from app import (
     TemplateMeta,
     bundled_templates,
     database_configured,
-    generate_document,
     load_templates_from_neon,
     normalize_country,
     resolve_currency_code,
     safe_filename,
 )
+from app_entry import generate_document_safely
 
 
 app = FastAPI(
@@ -121,7 +121,7 @@ def generate_outreach_agreement(request: GenerateRequest) -> dict:
             }
         )
 
-        document_bytes, replacement_counts = generate_document(template, row)
+        document_bytes, replacement_counts = generate_document_safely(template, row)
         digest = hashlib.sha256(document_bytes).hexdigest()
         filename = (
             f"{safe_filename(request.providerName)} - "
