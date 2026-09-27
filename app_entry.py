@@ -54,7 +54,7 @@ def _replace_highlighted_runs_once(
     return counts
 
 
-def _generate_document_without_duplicate_provider_fields(template, row):
+def generate_document_safely(template, row):
     document = generator_app.Document(
         generator_app.io.BytesIO(generator_app.get_template_bytes(template))
     )
@@ -78,7 +78,7 @@ def _generate_document_without_duplicate_provider_fields(template, row):
 
 # Keep the existing Streamlit UI and generation pipeline, replacing only the
 # document-generation function responsible for the duplicate output.
-generator_app.generate_document = _generate_document_without_duplicate_provider_fields
+generator_app.generate_document = generate_document_safely
 
 
 if __name__ == "__main__":
